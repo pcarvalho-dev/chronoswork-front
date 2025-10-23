@@ -102,9 +102,9 @@ export default function DashboardPage() {
               <Image
                 src="/logo.png"
                 alt="Chronos.work"
-                width={240}
-                height={64}
-                className="h-12 w-auto"
+                width={1200}
+                height={320}
+                className="h-60 w-auto"
               />
             </div>
 

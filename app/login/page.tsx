@@ -4,6 +4,7 @@ import { useState, FormEvent } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import InteractiveBackground from '../components/InteractiveBackground';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -42,16 +43,17 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-white to-warmGrey-50 px-4">
-      <div className="max-w-md w-full">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-white to-warmGrey-50 px-4 relative overflow-hidden">
+      <InteractiveBackground />
+      <div className="max-w-md w-full relative z-10">
         {/* Logo */}
         <Link href="/" className="flex items-center justify-center gap-2 mb-8">
           <Image
             src="/logo.png"
             alt="Chronos.work"
-            width={220}
-            height={60}
-            className="h-12 w-auto"
+            width={1100}
+            height={300}
+            className="h-60 w-auto"
           />
         </Link>
 
