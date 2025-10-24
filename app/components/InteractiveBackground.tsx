@@ -1,13 +1,20 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function InteractiveBackground() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isHovering, setIsHovering] = useState(false);
 
   useEffect(() => {
+    let lastUpdate = 0;
+    const throttleMs = 32; // ~30fps for smoother but less resource intensive
+
     const handleMouseMove = (e: MouseEvent) => {
+      const now = Date.now();
+      if (now - lastUpdate < throttleMs) return;
+
+      lastUpdate = now;
       setMousePosition({ x: e.clientX, y: e.clientY });
       setIsHovering(true);
     };
@@ -27,64 +34,123 @@ export default function InteractiveBackground() {
 
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
-      {/* Animated gradient blobs */}
+      {/* Base gradient background */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background: 'linear-gradient(135deg, #e0e7ff 0%, #fce7f3 50%, #ddd6fe 100%)',
+        }}
+      />
+
+      {/* Animated gradient mesh - large blobs */}
       <div className="absolute inset-0">
-        {/* Blob 1 */}
+        {/* Top left - Blue to Purple */}
         <div
-          className="absolute w-96 h-96 rounded-full blur-3xl opacity-30 animate-blob"
+          className="absolute rounded-full blur-3xl opacity-60 animate-blob"
           style={{
-            background: 'radial-gradient(circle, rgba(139, 92, 246, 0.8), transparent)',
-            top: '10%',
-            left: '10%',
+            width: '700px',
+            height: '700px',
+            background: 'radial-gradient(circle, rgba(147, 197, 253, 1) 0%, rgba(196, 181, 253, 0.8) 40%, transparent 70%)',
+            top: '-15%',
+            left: '-15%',
             animationDelay: '0s',
+            animationDuration: '12s',
           }}
         />
 
-        {/* Blob 2 */}
+        {/* Top right - Pink to Purple */}
         <div
-          className="absolute w-96 h-96 rounded-full blur-3xl opacity-30 animate-blob"
+          className="absolute rounded-full blur-3xl opacity-50 animate-blob"
           style={{
-            background: 'radial-gradient(circle, rgba(236, 72, 153, 0.6), transparent)',
-            top: '50%',
-            right: '10%',
+            width: '650px',
+            height: '650px',
+            background: 'radial-gradient(circle, rgba(251, 207, 232, 1) 0%, rgba(221, 214, 254, 0.7) 40%, transparent 70%)',
+            top: '-10%',
+            right: '-10%',
             animationDelay: '2s',
+            animationDuration: '15s',
           }}
         />
 
-        {/* Blob 3 */}
+        {/* Bottom right - Purple */}
         <div
-          className="absolute w-96 h-96 rounded-full blur-3xl opacity-30 animate-blob"
+          className="absolute rounded-full blur-3xl opacity-55 animate-blob"
           style={{
-            background: 'radial-gradient(circle, rgba(59, 130, 246, 0.6), transparent)',
-            bottom: '10%',
-            left: '30%',
+            width: '680px',
+            height: '680px',
+            background: 'radial-gradient(circle, rgba(167, 139, 250, 0.9) 0%, rgba(196, 181, 253, 0.6) 40%, transparent 70%)',
+            bottom: '-15%',
+            right: '5%',
             animationDelay: '4s',
+            animationDuration: '18s',
+          }}
+        />
+
+        {/* Center left - Blue */}
+        <div
+          className="absolute rounded-full blur-3xl opacity-50 animate-blob"
+          style={{
+            width: '600px',
+            height: '600px',
+            background: 'radial-gradient(circle, rgba(191, 219, 254, 1) 0%, rgba(147, 197, 253, 0.7) 40%, transparent 70%)',
+            top: '35%',
+            left: '-5%',
+            animationDelay: '1s',
+            animationDuration: '14s',
+          }}
+        />
+
+        {/* Center - Pink accent */}
+        <div
+          className="absolute rounded-full blur-3xl opacity-40 animate-blob"
+          style={{
+            width: '550px',
+            height: '550px',
+            background: 'radial-gradient(circle, rgba(252, 231, 243, 1) 0%, rgba(251, 207, 232, 0.6) 40%, transparent 70%)',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            animationDelay: '3s',
+            animationDuration: '16s',
+          }}
+        />
+
+        {/* Bottom left - Light purple */}
+        <div
+          className="absolute rounded-full blur-3xl opacity-45 animate-blob"
+          style={{
+            width: '620px',
+            height: '620px',
+            background: 'radial-gradient(circle, rgba(221, 214, 254, 1) 0%, rgba(196, 181, 253, 0.6) 40%, transparent 70%)',
+            bottom: '0%',
+            left: '-8%',
+            animationDelay: '5s',
+            animationDuration: '13s',
           }}
         />
       </div>
 
-      {/* Mouse follower gradient */}
+      {/* Mouse follower - more visible glow */}
       {isHovering && (
         <div
-          className="absolute w-[600px] h-[600px] rounded-full blur-3xl opacity-20 transition-all duration-300 ease-out"
+          className="absolute rounded-full blur-3xl opacity-40 transition-all duration-500 ease-out"
           style={{
-            background: 'radial-gradient(circle, rgba(139, 92, 246, 0.8), rgba(236, 72, 153, 0.4), transparent)',
-            left: mousePosition.x - 300,
-            top: mousePosition.y - 300,
+            width: '500px',
+            height: '500px',
+            background: 'radial-gradient(circle, rgba(167, 139, 250, 0.8) 0%, rgba(147, 197, 253, 0.5) 40%, transparent 70%)',
+            left: mousePosition.x - 250,
+            top: mousePosition.y - 250,
             transform: 'translate3d(0, 0, 0)',
+            pointerEvents: 'none',
           }}
         />
       )}
 
-      {/* Grid overlay */}
+      {/* Subtle overlay for depth */}
       <div
-        className="absolute inset-0 opacity-[0.03]"
+        className="absolute inset-0"
         style={{
-          backgroundImage: `
-            linear-gradient(rgba(139, 92, 246, 0.5) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(139, 92, 246, 0.5) 1px, transparent 1px)
-          `,
-          backgroundSize: '50px 50px',
+          background: 'radial-gradient(circle at 50% 50%, transparent 0%, rgba(255, 255, 255, 0.1) 100%)',
         }}
       />
     </div>

@@ -1,0 +1,161 @@
+{
+  "version": "1.0",
+  "project": {
+    "name": "Chronos.work Frontend",
+    "type": "nextjs",
+    "description": "Frontend moderno de rastreamento de tempo com Next.js 16, React 19 e Tailwind CSS"
+  },
+  "permissions": {
+    "allowedCommands": [
+      "npm run dev",
+      "npm run build",
+      "npm run lint",
+      "npm install",
+      "npm uninstall",
+      "git status",
+      "git add",
+      "git commit",
+      "git push",
+      "git pull"
+    ],
+    "autoApprove": [
+      "npm run build",
+      "npm run dev",
+      "npm run lint",
+      "git status"
+    ]
+  },
+  "agents": {
+    "desenvolvedor-frontend": {
+      "description": "Agente para desenvolvimento frontend com permissões completas",
+      "permissions": {
+        "read": ["**/*"],
+        "write": [
+          "app/**/*.{ts,tsx,js,jsx}",
+          "app/**/*.css",
+          "public/**/*",
+          "*.config.{js,ts}",
+          "*.json",
+          "README.md",
+          "CLAUDE.md"
+        ],
+        "execute": [
+          "npm run dev",
+          "npm run build",
+          "npm run lint",
+          "npm install *",
+          "npm uninstall *"
+        ]
+      },
+      "context": [
+        "CLAUDE.md",
+        "README.md",
+        "package.json",
+        "tsconfig.json",
+        "tailwind.config.js",
+        "app/lib/api.ts"
+      ],
+      "apiDocumentation": "http://localhost:8000/openapi.json",
+      "guidelines": [
+        "Sempre use design glassmorphism moderno com efeitos de blur e gradientes",
+        "Mantenha padrões de UI inspirados no macOS Tahoe",
+        "Use o sistema de design estabelecido no globals.css",
+        "Todos os novos componentes devem usar glass-container, gradient-text e estilos de botão modernos",
+        "Prefira backdrop-blur e transparência ao invés de fundos sólidos",
+        "Mantenha animações suaves com duração de 300ms e timing ease-in-out",
+        "Sempre adicione efeitos hover com transições de scale e shadow",
+        "Use ícones com gradiente nos cards (padrão from-primary-500 to-purple-600)",
+        "Mantenha cantos arredondados consistentes (rounded-xl para inputs/buttons, rounded-2xl para cards)",
+        "Adicione estados de loading com animações de spinner para todas operações assíncronas",
+        "IMPORTANTE: Ao criar telas que se integram com a API, sempre verifique a documentação da API em http://localhost:8000/openapi.json para validar endpoints, schemas de request/response e métodos disponíveis antes da implementação",
+        "Use a ferramenta WebFetch para ler http://localhost:8000/openapi.json quando precisar entender os contratos da API"
+      ]
+    },
+    "designer-ui": {
+      "description": "Agente especializado em design de UI/UX e estilização",
+      "permissions": {
+        "read": ["**/*"],
+        "write": [
+          "app/**/*.css",
+          "app/globals.css",
+          "tailwind.config.js",
+          "app/components/**/*.{tsx,jsx}"
+        ],
+        "execute": ["npm run build"]
+      },
+      "context": [
+        "app/globals.css",
+        "tailwind.config.js",
+        "app/components/InteractiveBackground.tsx"
+      ],
+      "guidelines": [
+        "Foque em glassmorphism e padrões de UI modernos",
+        "Use paleta de gradientes roxo/rosa/azul",
+        "Mantenha consistência de design em todas as páginas",
+        "Adicione micro-interações e estados de hover",
+        "Garanta design responsivo para todos os componentes",
+        "Use backdrop-blur-md até backdrop-blur-xl para efeitos glass",
+        "Mantenha opacidade de cores entre 40-70% para containers glass"
+      ]
+    },
+    "construtor-componentes": {
+      "description": "Agente para criar e modificar componentes React",
+      "permissions": {
+        "read": ["**/*"],
+        "write": [
+          "app/components/**/*.{ts,tsx}",
+          "app/**/page.tsx"
+        ],
+        "execute": ["npm run lint"]
+      },
+      "context": [
+        "CLAUDE.md",
+        "app/lib/api.ts",
+        "app/components/**/*.tsx"
+      ],
+      "guidelines": [
+        "Use a diretiva 'use client' para componentes interativos",
+        "Implemente tipos TypeScript adequados para todas as props",
+        "Adicione estados de loading e error para todos os componentes que buscam dados",
+        "Use os padrões estabelecidos de card, button e input",
+        "Inclua atributos de acessibilidade adequados (aria-labels, roles)",
+        "Adicione ícones SVG significativos no estilo Heroicons",
+        "Implemente validação de formulário adequada com feedback ao usuário",
+        "Antes de criar integrações com API, busque e revise http://localhost:8000/openapi.json para garantir uso correto de endpoints e modelos de dados",
+        "Sempre use o cliente api de app/lib/api.ts para comunicação com o backend"
+      ]
+    }
+  },
+  "hooks": {
+    "pre-commit": {
+      "enabled": false,
+      "commands": []
+    },
+    "post-write": {
+      "enabled": false,
+      "commands": []
+    }
+  },
+  "settings": {
+    "autoFormat": true,
+    "autoLint": false,
+    "contextFiles": [
+      "CLAUDE.md",
+      "README.md",
+      "package.json"
+    ],
+    "excludePatterns": [
+      "node_modules/**",
+      ".next/**",
+      "dist/**",
+      "build/**",
+      "*.log"
+    ]
+  },
+  "shortcuts": {
+    "dev": "npm run dev",
+    "build": "npm run build",
+    "lint": "npm run lint",
+    "clean": "rm -rf .next node_modules && npm install"
+  }
+}

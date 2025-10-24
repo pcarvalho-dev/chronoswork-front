@@ -57,7 +57,7 @@ export default function Features() {
   ];
 
   return (
-    <section id="features" className="py-20 md:py-32 bg-white">
+    <section id="features" className="py-20 md:py-32 relative">
       <div className="container-custom">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold text-warmGrey-900 mb-6">
