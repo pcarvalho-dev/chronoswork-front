@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { api, TimeLog } from '../lib/api';
 import InteractiveBackground from '../components/InteractiveBackground';
+import CameraCapture from '../components/CameraCapture';
+import PhotoViewer, { PhotoData } from '../components/PhotoViewer';
 import { useAuth } from '../contexts/AuthContext';
 
 const inspirationalQuotes = [
@@ -88,6 +90,10 @@ export default function DashboardPage() {
   const [currentTime, setCurrentTime] = useState('');
   const [weather, setWeather] = useState<{ temp: number; description: string; icon: string } | null>(null);
   const [weatherLoading, setWeatherLoading] = useState(true);
+  const [showCamera, setShowCamera] = useState(false);
+  const [cameraAction, setCameraAction] = useState<'checkin' | 'checkout' | null>(null);
+  const [photoViewerPhotos, setPhotoViewerPhotos] = useState<PhotoData[]>([]);
+  const [photoViewerInitialIndex, setPhotoViewerInitialIndex] = useState<number>(0);
 
   useEffect(() => {
     setIsClient(true);
@@ -183,32 +189,93 @@ export default function DashboardPage() {
     }
   };
 
-  const handleCheckIn = async () => {
+  const handleCheckInClick = () => {
+    setCameraAction('checkin');
+    setShowCamera(true);
+  };
+
+  const handleCheckOutClick = () => {
+    setCameraAction('checkout');
+    setShowCamera(true);
+  };
+
+  const handlePhotoCapture = async (photo: File) => {
+    setShowCamera(false);
     setActionLoading(true);
     setError('');
 
     try {
-      await api.checkIn();
+      // Captura a geolocalização
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        if (!navigator.geolocation) {
+          reject(new Error('Geolocalização não suportada pelo navegador'));
+          return;
+        }
+
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        });
+      });
+
+      const { latitude, longitude } = position.coords;
+
+      console.log('Geolocalização capturada:', { latitude, longitude, action: cameraAction });
+
+      if (cameraAction === 'checkin') {
+        await api.checkIn(photo, latitude, longitude);
+      } else if (cameraAction === 'checkout') {
+        await api.checkOut(photo, latitude, longitude);
+      }
       await fetchTimeLogs();
     } catch (err: any) {
-      setError(err.message || 'Falha ao registrar entrada');
+      const errorMessage = err.message || `Falha ao registrar ${cameraAction === 'checkin' ? 'entrada' : 'saída'}`;
+      setError(errorMessage);
+      console.error('Erro ao capturar localização ou registrar ponto:', err);
     } finally {
       setActionLoading(false);
+      setCameraAction(null);
     }
   };
 
-  const handleCheckOut = async () => {
-    setActionLoading(true);
-    setError('');
+  const handleCameraCancel = () => {
+    setShowCamera(false);
+    setCameraAction(null);
+  };
 
-    try {
-      await api.checkOut();
-      await fetchTimeLogs();
-    } catch (err: any) {
-      setError(err.message || 'Falha ao registrar saída');
-    } finally {
-      setActionLoading(false);
+  const handleViewPhoto = (log: TimeLog, photoType: 'checkin' | 'checkout') => {
+    const photos: PhotoData[] = [];
+
+    // Add check-in photo if exists
+    if (log.checkInPhoto) {
+      photos.push({
+        url: `http://localhost:8000${log.checkInPhoto}`,
+        title: 'Foto de Entrada',
+        timestamp: log.checkIn,
+        type: 'checkin'
+      });
     }
+
+    // Add check-out photo if exists
+    if (log.checkOutPhoto) {
+      photos.push({
+        url: `http://localhost:8000${log.checkOutPhoto}`,
+        title: 'Foto de Saída',
+        timestamp: log.checkOut!,
+        type: 'checkout'
+      });
+    }
+
+    // Determine initial index based on which photo was clicked
+    const initialIndex = photoType === 'checkin' ? 0 : photos.length - 1;
+
+    setPhotoViewerPhotos(photos);
+    setPhotoViewerInitialIndex(initialIndex);
+  };
+
+  const handleClosePhotoViewer = () => {
+    setPhotoViewerPhotos([]);
   };
 
   const formatDate = (dateString: string) => {
@@ -578,7 +645,7 @@ export default function DashboardPage() {
                   </div>
                 </div>
                 <button
-                  onClick={handleCheckOut}
+                  onClick={handleCheckOutClick}
                   disabled={actionLoading}
                   className="btn-secondary w-full text-lg py-4"
                 >
@@ -668,7 +735,7 @@ export default function DashboardPage() {
                   <p className="text-warmGrey-600 text-sm mt-1">Clique no botão abaixo para começar a rastrear seu tempo</p>
                 </div>
                 <button
-                  onClick={handleCheckIn}
+                  onClick={handleCheckInClick}
                   disabled={actionLoading}
                   className="btn-primary w-full text-lg py-4"
                 >
@@ -872,6 +939,33 @@ export default function DashboardPage() {
                           </svg>
                           <span className="font-medium">Entrada:</span>
                           <span>{formatDate(log.checkIn)}</span>
+                          <div className="flex items-center gap-1">
+                            {log.checkInPhoto && (
+                              <button
+                                onClick={() => handleViewPhoto(log, 'checkin')}
+                                className="p-1.5 rounded-lg hover:bg-primary-100/50 transition-colors group"
+                                title="Ver foto de entrada"
+                              >
+                                <svg className="w-4 h-4 text-primary-600 group-hover:text-primary-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                              </button>
+                            )}
+                            {log.checkInLatitude && log.checkInLongitude && (
+                              <a
+                                href={`https://www.google.com/maps?q=${log.checkInLatitude},${log.checkInLongitude}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-1.5 rounded-lg hover:bg-green-100/50 transition-colors group"
+                                title="Ver localização de entrada no Google Maps"
+                              >
+                                <svg className="w-4 h-4 text-green-600 group-hover:text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                              </a>
+                            )}
+                          </div>
                         </div>
                         <div className="flex items-center gap-2 text-warmGrey-700">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -879,6 +973,33 @@ export default function DashboardPage() {
                           </svg>
                           <span className="font-medium">Saída:</span>
                           <span>{log.checkOut ? formatDate(log.checkOut) : 'Em andamento...'}</span>
+                          <div className="flex items-center gap-1">
+                            {log.checkOutPhoto && (
+                              <button
+                                onClick={() => handleViewPhoto(log, 'checkout')}
+                                className="p-1.5 rounded-lg hover:bg-primary-100/50 transition-colors group"
+                                title="Ver foto de saída"
+                              >
+                                <svg className="w-4 h-4 text-primary-600 group-hover:text-primary-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                              </button>
+                            )}
+                            {log.checkOutLatitude && log.checkOutLongitude && (
+                              <a
+                                href={`https://www.google.com/maps?q=${log.checkOutLatitude},${log.checkOutLongitude}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-1.5 rounded-lg hover:bg-red-100/50 transition-colors group"
+                                title="Ver localização de saída no Google Maps"
+                              >
+                                <svg className="w-4 h-4 text-red-600 group-hover:text-red-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                              </a>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -895,6 +1016,24 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
+
+      {/* Camera Capture Modal */}
+      {showCamera && (
+        <CameraCapture
+          onCapture={handlePhotoCapture}
+          onCancel={handleCameraCancel}
+          title={cameraAction === 'checkin' ? 'Capturar Foto - Check-in' : 'Capturar Foto - Check-out'}
+        />
+      )}
+
+      {/* Photo Viewer Modal */}
+      {photoViewerPhotos.length > 0 && (
+        <PhotoViewer
+          photos={photoViewerPhotos}
+          initialIndex={photoViewerInitialIndex}
+          onClose={handleClosePhotoViewer}
+        />
+      )}
     </div>
   );
 }

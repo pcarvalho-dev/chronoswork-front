@@ -53,7 +53,11 @@ The backend API must be running on `http://localhost:8000` (from the chronos_wor
 ### Project Structure
 ```
 app/
-├── components/          # Reusable UI components (Navbar, Hero, Features, Footer, etc.)
+├── components/
+│   ├── CameraCapture.tsx    # Camera modal for check-in/check-out photos
+│   ├── PhotoViewer.tsx      # Photo viewer modal for viewing check-in/check-out photos
+│   ├── InteractiveBackground.tsx
+│   └── [Other UI components]
 ├── contexts/
 │   └── AuthContext.tsx  # Authentication context and useAuth hook
 ├── lib/
@@ -84,8 +88,9 @@ await register({ name, email, password });
 await logout();
 
 // Direct API usage (for specific cases)
-await api.checkIn();
-await api.checkOut();
+const photoFile = new File([blob], 'checkin.jpg', { type: 'image/jpeg' });
+await api.checkIn(photoFile, latitude, longitude);  // Photo and location required
+await api.checkOut(photoFile, latitude, longitude); // Photo and location required
 const logs = await api.getTimeLogs();
 const { user } = await api.getProfile();
 ```
@@ -97,12 +102,12 @@ const { user } = await api.getProfile();
 - `POST /auth/logout` - Logout user (invalidates refresh token)
 - `GET /auth/profile` - Get current user profile (requires auth)
 - `POST /auth/upload-photo` - Upload profile photo (requires auth)
-- `POST /timelog/checkin` - Start work session (requires auth)
-- `POST /timelog/checkout` - End current session (requires auth)
+- `POST /timelog/checkin` - Start work session (requires auth + photo + checkInLatitude + checkInLongitude via FormData)
+- `POST /timelog/checkout` - End current session (requires auth + photo + checkOutLatitude + checkOutLongitude via FormData)
 - `GET /timelog` - Get all time logs for user (requires auth)
 
 **Types:**
-- `TimeLog` - Time log entry with id, checkIn, checkOut, and optional user
+- `TimeLog` - Time log entry with id, checkIn, checkOut, checkInPhoto, checkOutPhoto, checkInLatitude, checkInLongitude, checkOutLatitude, checkOutLongitude, and optional user
 - `User` - Full user data with all profile fields (name, email, cpf, department, etc.)
 - `RegisterData` - User registration payload with required and optional fields
 - `AuthResponse` - Login/register response with message, user, accessToken, refreshToken
@@ -160,6 +165,39 @@ The landing page uses an animated gradient mesh background (`InteractiveBackgrou
 - Base gradient overlay for depth
 - All animations use `ease-in-out` for smooth transitions
 
+**Camera Capture:**
+The `CameraCapture.tsx` component provides photo capture functionality for check-in/check-out:
+- Uses browser's `getUserMedia` API to access device camera
+- Defaults to front-facing camera (`facingMode: 'user'`)
+- Captures photos at 1280x720 resolution
+- Provides visual guide (circle overlay) for face positioning
+- Allows photo retake before confirmation
+- Converts captured image to JPEG File object for upload
+- Displays as full-screen modal overlay with glassmorphism styling
+- Automatically stops camera stream when photo is captured or modal is closed
+
+**Photo Viewer:**
+The `PhotoViewer.tsx` component displays check-in/check-out photos from time log history with advanced features:
+- **Navigation**: Browse between multiple photos using arrow buttons or keyboard (← →)
+- **Comparison Mode**: Toggle side-by-side view to compare check-in and check-out photos
+  - Automatic detection if both photos are available
+  - Color-coded borders (green for check-in, red for check-out)
+  - Displays timestamps for each photo in comparison
+  - Max-width expands to 7xl for better side-by-side viewing
+- **Single Photo Mode**:
+  - Full-screen modal overlay with dark background
+  - Large photo display with object-contain to preserve aspect ratio
+  - Maximum height of 70vh for optimal viewing
+  - Photo counter showing current position (e.g., "1 de 2")
+  - Badge indicating photo type (Check-in/Check-out) with color coding
+  - Timestamp display in Brazilian Portuguese format
+- **Navigation Controls**:
+  - Previous/Next buttons overlaid on photo (circular with hover effects)
+  - Keyboard shortcuts: ← (previous), → (next), Esc (close)
+  - Click outside modal or close button to dismiss
+- **UI Integration**: Icon buttons in time log history next to timestamps
+- **Photo Data Interface**: `PhotoData` type with url, title, timestamp, and type fields
+
 ## Key Implementation Details
 
 ### Time Calculation
@@ -167,6 +205,52 @@ Duration calculation in dashboard compares check-in timestamp with either check-
 
 ### Active Session Detection
 Active sessions are identified by `checkOut === null`. The dashboard finds the first log without a checkout time to show as the current session.
+
+### Photo and Location Required Check-In/Check-Out Flow
+1. User clicks "Registrar Entrada" or "Registrar Saída" button
+2. Camera modal opens automatically requesting camera permissions
+3. User positions face in the circular guide and captures photo
+4. User can retake photo if needed
+5. Upon confirmation, photo is converted to File object
+6. **Geolocation is automatically captured** using browser's Geolocation API
+   - High accuracy mode enabled (`enableHighAccuracy: true`)
+   - 10 second timeout
+   - Latitude and longitude coordinates obtained
+7. Photo and location are sent to backend via FormData:
+   - Check-in: `photo`, `checkInLatitude`, `checkInLongitude`
+   - Check-out: `photo`, `checkOutLatitude`, `checkOutLongitude`
+8. Backend validates and stores the photo and location with the time log entry
+9. Dashboard refreshes to show updated time logs with location buttons
+
+### Photo Viewing and Comparison Flow
+1. User clicks camera icon (📸) next to check-in or check-out timestamp in history
+2. PhotoViewer modal opens with array of available photos from that log entry
+3. **Single Photo Mode** (default):
+   - Displays clicked photo with navigation buttons if multiple photos exist
+   - Shows photo type badge (Check-in/Check-out) and timestamp
+   - User can navigate between photos using arrow buttons or keyboard
+4. **Comparison Mode** (if both check-in and check-out photos exist):
+   - User clicks comparison icon button in header
+   - View switches to side-by-side grid layout
+   - Check-in photo on left (green border), check-out on right (red border)
+   - Each photo displays its timestamp
+   - User can toggle back to single photo mode
+5. Modal closes via close button, click outside, or Esc key
+
+### Location Viewing in Time Log History
+Each time log entry in the history displays location buttons when coordinates are available:
+- **Check-in Location Button** (📍 green icon):
+  - Appears next to check-in timestamp if `checkInLatitude` and `checkInLongitude` exist
+  - Links to Google Maps with coordinates: `https://www.google.com/maps?q=lat,long`
+  - Opens in new tab with `target="_blank"` and `rel="noopener noreferrer"`
+  - Hover effect changes background to green-100/50
+  - Tooltip: "Ver localização de entrada no Google Maps"
+- **Check-out Location Button** (📍 red icon):
+  - Appears next to check-out timestamp if `checkOutLatitude` and `checkOutLongitude` exist
+  - Same behavior as check-in but with red color scheme
+  - Tooltip: "Ver localização de saída no Google Maps"
+- **Button Grouping**: Photo and location buttons are grouped together using flex layout
+- **Color Coding**: Green for check-in, red for check-out (consistent with comparison mode)
 
 ### Image Assets
 Logo is at `/public/logo.png` and should be referenced via Next.js Image component with dimensions 1200x320 (auto-resized as needed).
@@ -183,6 +267,22 @@ This project was migrated from Vite to Next.js 16 for better SEO, file-based rou
 - ✅ JWT-based authentication with access and refresh tokens
 - ✅ Authentication context for global user state
 - ✅ Automatic token refresh on expiration
+- ✅ Camera capture for check-in/check-out with mandatory photos
+- ✅ **Geolocation tracking for check-in/check-out**
+  - Automatic location capture using browser Geolocation API
+  - High accuracy mode for precise coordinates
+  - Latitude and longitude stored with each time log entry
+  - Google Maps integration with redirect buttons in history
+  - Color-coded location icons (green for check-in, red for check-out)
+- ✅ Advanced photo viewer with navigation and comparison
+  - Browse between photos with arrow buttons or keyboard
+  - Side-by-side comparison mode for check-in vs check-out
+  - Color-coded borders and timestamps in comparison view
+  - Keyboard shortcuts (←, →, Esc)
+- ✅ Real-time weather display based on geolocation
+- ✅ Time tracking with active session detection
+- ✅ Daily inspirational quotes
+- ✅ Statistics dashboard (hours worked, break time, hours bank)
 
 ## Future Planned Features
 
