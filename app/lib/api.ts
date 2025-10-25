@@ -47,9 +47,9 @@ class ApiClient {
   ): Promise<T> {
     const url = `${this.baseURL}${endpoint}`;
 
-    const headers: HeadersInit = {
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...options.headers,
+      ...(options.headers as Record<string, string>),
     };
 
     // Add Authorization header if useAuth is true
@@ -57,6 +57,9 @@ class ApiClient {
       const token = this.getAccessToken();
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
+      } else {
+        console.error('No access token found for authenticated request to:', endpoint);
+        throw new Error('Você precisa fazer login para acessar esta funcionalidade');
       }
     }
 
@@ -110,6 +113,7 @@ class ApiClient {
 
   // Auth endpoints
   async login(email: string, password: string): Promise<AuthResponse> {
+    console.log('Attempting login for:', email);
     const response = await this.request<AuthResponse>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
@@ -118,6 +122,9 @@ class ApiClient {
     // Store tokens
     if (response.accessToken && response.refreshToken) {
       this.setTokens(response.accessToken, response.refreshToken);
+      console.log('Login successful, tokens stored');
+    } else {
+      console.warn('Login response missing tokens:', response);
     }
 
     return response;
@@ -177,7 +184,7 @@ class ApiClient {
     formData.append('photo', file);
 
     const token = this.getAccessToken();
-    const headers: HeadersInit = {};
+    const headers: Record<string, string> = {};
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
@@ -197,16 +204,90 @@ class ApiClient {
   }
 
   // Time log endpoints
-  async checkIn() {
-    return this.request('/timelog/checkin', {
+  async checkIn(photo: File, latitude: number, longitude: number) {
+    const url = `${this.baseURL}/timelog/checkin`;
+    const formData = new FormData();
+    formData.append('photo', photo);
+    formData.append('checkInLatitude', latitude.toString());
+    formData.append('checkInLongitude', longitude.toString());
+
+    // Debug: Log dos dados sendo enviados
+    console.log('Check-in data:', {
+      photo: photo.name,
+      checkInLatitude: latitude,
+      checkInLongitude: longitude
+    });
+
+    // Debug: Log de todos os campos do FormData
+    console.log('FormData fields:');
+    for (const [key, value] of formData.entries()) {
+      console.log(`  ${key}:`, value instanceof File ? `File(${value.name})` : value);
+    }
+
+    const token = this.getAccessToken();
+    if (!token) {
+      throw new Error('Você precisa fazer login para fazer check-in');
+    }
+
+    const headers: Record<string, string> = {
+      'Authorization': `Bearer ${token}`
+    };
+
+    const response = await fetch(url, {
       method: 'POST',
-    }, true);
+      headers,
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Falha ao fazer check-in' }));
+      throw new Error(error.message || 'Falha ao fazer check-in');
+    }
+
+    return response.json();
   }
 
-  async checkOut() {
-    return this.request('/timelog/checkout', {
+  async checkOut(photo: File, latitude: number, longitude: number) {
+    const url = `${this.baseURL}/timelog/checkout`;
+    const formData = new FormData();
+    formData.append('photo', photo);
+    formData.append('checkOutLatitude', latitude.toString());
+    formData.append('checkOutLongitude', longitude.toString());
+
+    // Debug: Log dos dados sendo enviados
+    console.log('Check-out data:', {
+      photo: photo.name,
+      checkOutLatitude: latitude,
+      checkOutLongitude: longitude
+    });
+
+    // Debug: Log de todos os campos do FormData
+    console.log('FormData fields:');
+    for (const [key, value] of formData.entries()) {
+      console.log(`  ${key}:`, value instanceof File ? `File(${value.name})` : value);
+    }
+
+    const token = this.getAccessToken();
+    if (!token) {
+      throw new Error('Você precisa fazer login para fazer check-out');
+    }
+
+    const headers: Record<string, string> = {
+      'Authorization': `Bearer ${token}`
+    };
+
+    const response = await fetch(url, {
       method: 'POST',
-    }, true);
+      headers,
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Falha ao fazer check-out' }));
+      throw new Error(error.message || 'Falha ao fazer check-out');
+    }
+
+    return response.json();
   }
 
   async getTimeLogs(): Promise<TimeLog[]> {
@@ -219,6 +300,12 @@ export interface TimeLog {
   id: number;
   checkIn: string;
   checkOut: string | null;
+  checkInPhoto?: string;
+  checkOutPhoto?: string;
+  checkInLatitude?: number;
+  checkInLongitude?: number;
+  checkOutLatitude?: number;
+  checkOutLongitude?: number;
   user?: {
     id: number;
     name: string;
