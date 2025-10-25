@@ -95,6 +95,17 @@ export default function DashboardPage() {
   const [photoViewerPhotos, setPhotoViewerPhotos] = useState<PhotoData[]>([]);
   const [photoViewerInitialIndex, setPhotoViewerInitialIndex] = useState<number>(0);
 
+  // Helper function to build correct photo URLs (handles both local and Cloudinary URLs)
+  const getPhotoUrl = (photoPath: string | null | undefined): string | null => {
+    if (!photoPath) return null;
+    // If it's already a full URL (Cloudinary), return as is
+    if (photoPath.startsWith('http://') || photoPath.startsWith('https://')) {
+      return photoPath;
+    }
+    // Otherwise, it's a local path, prepend the API URL
+    return `http://localhost:8000${photoPath}`;
+  };
+
   useEffect(() => {
     setIsClient(true);
     setDailyQuote(inspirationalQuotes[Math.floor(Math.random() * inspirationalQuotes.length)]);
@@ -249,22 +260,28 @@ export default function DashboardPage() {
 
     // Add check-in photo if exists
     if (log.checkInPhoto) {
-      photos.push({
-        url: `http://localhost:8000${log.checkInPhoto}`,
-        title: 'Foto de Entrada',
-        timestamp: log.checkIn,
-        type: 'checkin'
-      });
+      const checkInUrl = getPhotoUrl(log.checkInPhoto);
+      if (checkInUrl) {
+        photos.push({
+          url: checkInUrl,
+          title: 'Foto de Entrada',
+          timestamp: log.checkIn,
+          type: 'checkin'
+        });
+      }
     }
 
     // Add check-out photo if exists
     if (log.checkOutPhoto) {
-      photos.push({
-        url: `http://localhost:8000${log.checkOutPhoto}`,
-        title: 'Foto de Saída',
-        timestamp: log.checkOut!,
-        type: 'checkout'
-      });
+      const checkOutUrl = getPhotoUrl(log.checkOutPhoto);
+      if (checkOutUrl) {
+        photos.push({
+          url: checkOutUrl,
+          title: 'Foto de Saída',
+          timestamp: log.checkOut!,
+          type: 'checkout'
+        });
+      }
     }
 
     // Determine initial index based on which photo was clicked
@@ -520,7 +537,7 @@ export default function DashboardPage() {
                   className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-white/50 hover:border-primary-500 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
                 >
                   {user?.profilePhoto ? (
-                    <img src={`http://localhost:8000${user.profilePhoto}`} alt="Profile" className="w-full h-full object-cover" />
+                    <img src={getPhotoUrl(user.profilePhoto) || ''} alt="Profile" className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-primary-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
                       <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
