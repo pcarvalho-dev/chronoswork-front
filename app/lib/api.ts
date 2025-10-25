@@ -208,14 +208,14 @@ class ApiClient {
     const url = `${this.baseURL}/timelog/checkin`;
     const formData = new FormData();
     formData.append('photo', photo);
-    formData.append('checkInLatitude', latitude.toString());
-    formData.append('checkInLongitude', longitude.toString());
+    formData.append('latitude', latitude.toString());
+    formData.append('longitude', longitude.toString());
 
     // Debug: Log dos dados sendo enviados
     console.log('Check-in data:', {
       photo: photo.name,
-      checkInLatitude: latitude,
-      checkInLongitude: longitude
+      latitude: latitude,
+      longitude: longitude
     });
 
     // Debug: Log de todos os campos do FormData
@@ -302,8 +302,8 @@ export interface TimeLog {
   checkOut: string | null;
   checkInPhoto?: string;
   checkOutPhoto?: string;
-  checkInLatitude?: number;
-  checkInLongitude?: number;
+  latitude?: number;
+  longitude?: number;
   checkOutLatitude?: number;
   checkOutLongitude?: number;
   user?: {

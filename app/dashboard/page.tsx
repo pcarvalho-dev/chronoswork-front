@@ -968,9 +968,9 @@ export default function DashboardPage() {
                                 </svg>
                               </button>
                             )}
-                            {log.checkInLatitude && log.checkInLongitude && (
+                            {log.latitude && log.longitude && (
                               <a
-                                href={`https://www.google.com/maps?q=${log.checkInLatitude},${log.checkInLongitude}`}
+                                href={`https://www.google.com/maps?q=${log.latitude},${log.longitude}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="p-1.5 rounded-lg hover:bg-green-100/50 transition-colors group"

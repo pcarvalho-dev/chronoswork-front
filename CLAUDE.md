@@ -102,12 +102,12 @@ const { user } = await api.getProfile();
 - `POST /auth/logout` - Logout user (invalidates refresh token)
 - `GET /auth/profile` - Get current user profile (requires auth)
 - `POST /auth/upload-photo` - Upload profile photo (requires auth)
-- `POST /timelog/checkin` - Start work session (requires auth + photo + checkInLatitude + checkInLongitude via FormData)
+- `POST /timelog/checkin` - Start work session (requires auth + photo + latitude + longitude via FormData)
 - `POST /timelog/checkout` - End current session (requires auth + photo + checkOutLatitude + checkOutLongitude via FormData)
 - `GET /timelog` - Get all time logs for user (requires auth)
 
 **Types:**
-- `TimeLog` - Time log entry with id, checkIn, checkOut, checkInPhoto, checkOutPhoto, checkInLatitude, checkInLongitude, checkOutLatitude, checkOutLongitude, and optional user
+- `TimeLog` - Time log entry with id, checkIn, checkOut, checkInPhoto, checkOutPhoto, latitude, longitude, checkOutLatitude, checkOutLongitude, and optional user
 - `User` - Full user data with all profile fields (name, email, cpf, department, etc.)
 - `RegisterData` - User registration payload with required and optional fields
 - `AuthResponse` - Login/register response with message, user, accessToken, refreshToken
@@ -217,7 +217,7 @@ Active sessions are identified by `checkOut === null`. The dashboard finds the f
    - 10 second timeout
    - Latitude and longitude coordinates obtained
 7. Photo and location are sent to backend via FormData:
-   - Check-in: `photo`, `checkInLatitude`, `checkInLongitude`
+   - Check-in: `photo`, `latitude`, `longitude`
    - Check-out: `photo`, `checkOutLatitude`, `checkOutLongitude`
 8. Backend validates and stores the photo and location with the time log entry
 9. Dashboard refreshes to show updated time logs with location buttons
@@ -240,7 +240,7 @@ Active sessions are identified by `checkOut === null`. The dashboard finds the f
 ### Location Viewing in Time Log History
 Each time log entry in the history displays location buttons when coordinates are available:
 - **Check-in Location Button** (📍 green icon):
-  - Appears next to check-in timestamp if `checkInLatitude` and `checkInLongitude` exist
+  - Appears next to check-in timestamp if `latitude` and `longitude` exist
   - Links to Google Maps with coordinates: `https://www.google.com/maps?q=lat,long`
   - Opens in new tab with `target="_blank"` and `rel="noopener noreferrer"`
   - Hover effect changes background to green-100/50
