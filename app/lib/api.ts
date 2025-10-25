@@ -251,14 +251,14 @@ class ApiClient {
     const url = `${this.baseURL}/timelog/checkout`;
     const formData = new FormData();
     formData.append('photo', photo);
-    formData.append('checkOutLatitude', latitude.toString());
-    formData.append('checkOutLongitude', longitude.toString());
+    formData.append('latitude', latitude.toString());
+    formData.append('longitude', longitude.toString());
 
     // Debug: Log dos dados sendo enviados
     console.log('Check-out data:', {
       photo: photo.name,
-      checkOutLatitude: latitude,
-      checkOutLongitude: longitude
+      latitude: latitude,
+      longitude: longitude
     });
 
     // Debug: Log de todos os campos do FormData
@@ -302,10 +302,10 @@ export interface TimeLog {
   checkOut: string | null;
   checkInPhoto?: string;
   checkOutPhoto?: string;
-  latitude?: number;
-  longitude?: number;
-  checkOutLatitude?: number;
-  checkOutLongitude?: number;
+  latitude: number;
+  longitude: number;
+  outLatitude?: number | null;
+  outLongitude?: number | null;
   user?: {
     id: number;
     name: string;
