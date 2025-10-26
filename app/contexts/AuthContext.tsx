@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { api, User, RegisterData } from '@/app/lib/api';
+import { api, User, RegisterData, UpdateProfileData } from '@/app/lib/api';
 
 interface AuthContextType {
   user: User | null;
@@ -11,6 +11,7 @@ interface AuthContextType {
   register: (userData: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
   refreshUserProfile: () => Promise<void>;
+  updateProfile: (userData: UpdateProfileData) => Promise<void>;
   isAuthenticated: boolean;
 }
 
@@ -87,6 +88,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updateProfile = async (userData: UpdateProfileData) => {
+    const response = await api.updateProfile(userData);
+    setUser(response.user);
+  };
+
   const value = {
     user,
     loading,
@@ -94,6 +100,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     register,
     logout,
     refreshUserProfile,
+    updateProfile,
     isAuthenticated: !!user,
   };
 

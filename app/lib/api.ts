@@ -178,6 +178,27 @@ class ApiClient {
     return this.request<{ user: User }>('/auth/profile', {}, true);
   }
 
+  async updateProfile(userData: UpdateProfileData): Promise<{ message: string; user: User }> {
+    return this.request<{ message: string; user: User }>('/auth/profile', {
+      method: 'PUT',
+      body: JSON.stringify(userData),
+    }, true);
+  }
+
+  async forgotPassword(email: string): Promise<{ message: string }> {
+    return this.request<{ message: string }>('/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
+    return this.request<{ message: string }>('/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ token, newPassword }),
+    });
+  }
+
   async uploadPhoto(file: File): Promise<{ message: string; profilePhoto: string }> {
     const url = `${this.baseURL}/auth/upload-photo`;
     const formData = new FormData();
@@ -290,8 +311,15 @@ class ApiClient {
     return response.json();
   }
 
-  async getTimeLogs(): Promise<TimeLog[]> {
-    return this.request<TimeLog[]>('/timelog', {}, true);
+  async getTimeLogs(startDate?: string, endDate?: string): Promise<TimeLog[]> {
+    const params = new URLSearchParams();
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+
+    const queryString = params.toString();
+    const url = queryString ? `/timelog?${queryString}` : '/timelog';
+
+    return this.request<TimeLog[]>(url, {}, true);
   }
 }
 
@@ -393,6 +421,45 @@ export interface RegisterData {
   emergencyContactRelationship?: string;
   education?: string;
   notes?: string;
+}
+
+export interface UpdateProfileData {
+  name?: string;
+  email?: string;
+  cpf?: string;
+  rg?: string;
+  birthDate?: string;
+  gender?: string;
+  maritalStatus?: string;
+  phone?: string;
+  mobilePhone?: string;
+  address?: string;
+  addressNumber?: string;
+  addressComplement?: string;
+  neighborhood?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  country?: string;
+  employeeId?: string;
+  department?: string;
+  position?: string;
+  hireDate?: string;
+  salary?: number;
+  workSchedule?: string;
+  employmentType?: string;
+  directSupervisor?: string;
+  bankName?: string;
+  bankAccount?: string;
+  bankAgency?: string;
+  bankAccountType?: string;
+  pix?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  emergencyContactRelationship?: string;
+  education?: string;
+  notes?: string;
+  isActive?: boolean;
 }
 
 export interface AuthResponse {

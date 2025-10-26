@@ -91,8 +91,11 @@ export default function DashboardPage() {
   const [weather, setWeather] = useState<{ temp: number; description: string; icon: string } | null>(null);
   const [weatherLoading, setWeatherLoading] = useState(true);
   const [showCamera, setShowCamera] = useState(false);
-  const [cameraAction, setCameraAction] = useState<'checkin' | 'checkout' | null>(null);
+  const [cameraAction, setCameraAction] = useState<'checkin' | 'checkout' | 'profilePhoto' | null>(null);
   const [photoViewerPhotos, setPhotoViewerPhotos] = useState<PhotoData[]>([]);
+  const [showPhotoOptions, setShowPhotoOptions] = useState(false);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [photoViewerInitialIndex, setPhotoViewerInitialIndex] = useState<number>(0);
 
   // Helper function to build correct photo URLs (handles both local and Cloudinary URLs)
@@ -183,9 +186,9 @@ export default function DashboardPage() {
     }
   };
 
-  const fetchTimeLogs = async () => {
+  const fetchTimeLogs = async (filterStartDate?: string, filterEndDate?: string) => {
     try {
-      const logs = await api.getTimeLogs();
+      const logs = await api.getTimeLogs(filterStartDate, filterEndDate);
       setTimeLogs(logs);
 
       // Verifica se há uma sessão ativa (sem horário de saída)
@@ -212,8 +215,28 @@ export default function DashboardPage() {
 
   const handlePhotoCapture = async (photo: File) => {
     setShowCamera(false);
-    setActionLoading(true);
     setError('');
+
+    // Handle profile photo upload
+    if (cameraAction === 'profilePhoto') {
+      setUploadingPhoto(true);
+      try {
+        await api.uploadPhoto(photo);
+        await refreshUserProfile();
+        setShowProfileMenu(false);
+        setShowPhotoOptions(false);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Erro ao fazer upload da foto';
+        setError(errorMessage);
+      } finally {
+        setUploadingPhoto(false);
+        setCameraAction(null);
+      }
+      return;
+    }
+
+    // Handle check-in/check-out
+    setActionLoading(true);
 
     try {
       // Captura a geolocalização
@@ -253,6 +276,18 @@ export default function DashboardPage() {
   const handleCameraCancel = () => {
     setShowCamera(false);
     setCameraAction(null);
+  };
+
+  const handleProfilePhotoCamera = () => {
+    setShowPhotoOptions(false);
+    setCameraAction('profilePhoto');
+    setShowCamera(true);
+  };
+
+  const handleProfilePhotoFile = () => {
+    setShowPhotoOptions(false);
+    // Trigger the file input click
+    document.getElementById('profile-photo-input')?.click();
   };
 
   const handleViewPhoto = (log: TimeLog, photoType: 'checkin' | 'checkout') => {
@@ -494,6 +529,7 @@ export default function DashboardPage() {
       await api.uploadPhoto(file);
       await refreshUserProfile();
       setShowProfileMenu(false);
+      setShowPhotoOptions(false);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro ao fazer upload da foto';
       setError(errorMessage);
@@ -551,15 +587,23 @@ export default function DashboardPage() {
                 {showProfileMenu && (
                   <div className="absolute right-0 mt-2 w-64 glass-container p-4 shadow-xl">
                     <div className="space-y-3">
-                      <label className="block">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handlePhotoUpload}
+                      {/* Hidden file input */}
+                      <input
+                        id="profile-photo-input"
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePhotoUpload}
+                        disabled={uploadingPhoto}
+                        className="hidden"
+                      />
+
+                      {/* Photo upload button - opens submenu */}
+                      {!showPhotoOptions ? (
+                        <button
+                          onClick={() => setShowPhotoOptions(true)}
                           disabled={uploadingPhoto}
-                          className="hidden"
-                        />
-                        <div className="btn-ghost w-full cursor-pointer text-sm">
+                          className="btn-ghost w-full text-sm"
+                        >
                           {uploadingPhoto ? (
                             <span className="flex items-center gap-2">
                               <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
@@ -576,13 +620,72 @@ export default function DashboardPage() {
                               {user?.profilePhoto ? 'Alterar foto' : 'Adicionar foto'}
                             </span>
                           )}
+                        </button>
+                      ) : (
+                        <div className="space-y-2">
+                          {/* Back button */}
+                          <button
+                            onClick={() => setShowPhotoOptions(false)}
+                            className="btn-ghost w-full text-sm text-warmGrey-600"
+                          >
+                            <span className="flex items-center gap-2">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                              </svg>
+                              Voltar
+                            </span>
+                          </button>
+
+                          {/* Camera option */}
+                          <button
+                            onClick={handleProfilePhotoCamera}
+                            className="btn-ghost w-full text-sm"
+                          >
+                            <span className="flex items-center gap-2">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                              </svg>
+                              Tirar foto agora
+                            </span>
+                          </button>
+
+                          {/* File option */}
+                          <button
+                            onClick={handleProfilePhotoFile}
+                            className="btn-ghost w-full text-sm"
+                          >
+                            <span className="flex items-center gap-2">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z" />
+                              </svg>
+                              Escolher da galeria
+                            </span>
+                          </button>
                         </div>
-                      </label>
+                      )}
+
+                      <button
+                        onClick={() => {
+                          setShowProfileMenu(false);
+                          setShowPhotoOptions(false);
+                          window.location.href = '/profile';
+                        }}
+                        className="btn-ghost w-full text-sm"
+                      >
+                        <span className="flex items-center gap-2">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                          Editar Perfil
+                        </span>
+                      </button>
 
                       <div className="border-t border-warmGrey-200 pt-3">
                         <button
                           onClick={() => {
                             setShowProfileMenu(false);
+                            setShowPhotoOptions(false);
                             handleLogout();
                           }}
                           className="btn-ghost w-full text-sm"
@@ -906,6 +1009,62 @@ export default function DashboardPage() {
             <div>
               <h2 className="text-2xl font-bold text-warmGrey-900">Histórico de Registros</h2>
               <p className="text-warmGrey-600 text-sm">Todas as suas sessões de trabalho</p>
+            </div>
+          </div>
+
+          {/* Date Filters */}
+          <div className="bg-white/40 backdrop-blur-md border border-white/30 rounded-xl p-4 mb-6">
+            <div className="flex flex-col sm:flex-row gap-4 items-end">
+              <div className="flex-1">
+                <label htmlFor="startDate" className="block text-sm font-semibold text-warmGrey-800 mb-2">
+                  Data Inicial
+                </label>
+                <input
+                  type="date"
+                  id="startDate"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-full px-4 py-2 border border-white/30 rounded-xl bg-white/50 backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-400/50 transition-all duration-300"
+                />
+              </div>
+              <div className="flex-1">
+                <label htmlFor="endDate" className="block text-sm font-semibold text-warmGrey-800 mb-2">
+                  Data Final
+                </label>
+                <input
+                  type="date"
+                  id="endDate"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="w-full px-4 py-2 border border-white/30 rounded-xl bg-white/50 backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-400/50 transition-all duration-300"
+                />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => fetchTimeLogs(startDate || undefined, endDate || undefined)}
+                  disabled={loading}
+                  className="btn-primary px-6 py-2 whitespace-nowrap"
+                >
+                  <svg className="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  Filtrar
+                </button>
+                {(startDate || endDate) && (
+                  <button
+                    onClick={() => {
+                      setStartDate('');
+                      setEndDate('');
+                      fetchTimeLogs();
+                    }}
+                    className="btn-secondary px-4 py-2 whitespace-nowrap"
+                  >
+                    <svg className="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 

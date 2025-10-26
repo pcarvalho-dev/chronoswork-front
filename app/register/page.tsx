@@ -174,12 +174,61 @@ export default function RegisterPage() {
   };
 
   const tabs = [
-    { id: 'basicos' as Tab, label: 'Básicos', icon: '👤' },
-    { id: 'pessoais' as Tab, label: 'Pessoais', icon: '📋' },
-    { id: 'endereco' as Tab, label: 'Endereço', icon: '📍' },
-    { id: 'profissionais' as Tab, label: 'Profissionais', icon: '💼' },
-    { id: 'bancarios' as Tab, label: 'Bancários', icon: '🏦' },
-    { id: 'emergencia' as Tab, label: 'Emergência', icon: '🚨' },
+    {
+      id: 'basicos' as Tab,
+      label: 'Básicos',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+      )
+    },
+    {
+      id: 'pessoais' as Tab,
+      label: 'Pessoais',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      )
+    },
+    {
+      id: 'endereco' as Tab,
+      label: 'Endereço',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+      )
+    },
+    {
+      id: 'profissionais' as Tab,
+      label: 'Profissionais',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+        </svg>
+      )
+    },
+    {
+      id: 'bancarios' as Tab,
+      label: 'Bancários',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+      )
+    },
+    {
+      id: 'emergencia' as Tab,
+      label: 'Emergência',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+      )
+    },
   ];
 
   return (
@@ -217,20 +266,20 @@ export default function RegisterPage() {
           )}
 
           {/* Tabs */}
-          <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+          <div className="flex flex-wrap gap-2 mb-6">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2 rounded-xl font-medium transition-all duration-300 whitespace-nowrap ${
+                className={`px-3 py-2 rounded-xl font-medium transition-all duration-300 flex items-center gap-2 flex-1 min-w-[90px] justify-center ${
                   activeTab === tab.id
                     ? 'bg-gradient-to-r from-primary-500 to-purple-600 text-white shadow-lg'
                     : 'bg-white/30 backdrop-blur-sm text-warmGrey-700 hover:bg-white/50'
                 }`}
               >
-                <span className="mr-2">{tab.icon}</span>
-                {tab.label}
+                {tab.icon}
+                <span className="hidden sm:inline">{tab.label}</span>
               </button>
             ))}
           </div>

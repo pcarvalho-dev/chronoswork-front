@@ -9,7 +9,22 @@
       "Bash(tasklist:*)",
       "Bash(findstr:*)",
       "Bash(taskkill:*)",
-      "Bash(netstat:*)"
+      "Bash(netstat:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(java:*)",
+      "Bash(readlink:*)",
+      "Bash(export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64:*)",
+      "Bash(export PATH=$PATH:$JAVA_HOME/bin)",
+      "Bash(echo:*)",
+      "Bash(ls:*)",
+      "Bash(export ANDROID_HOME=$HOME/Android/Sdk)",
+      "Bash(export PATH=$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/tools:$ANDROID_HOME/tools/bin)",
+      "Bash(npm install:*)",
+      "Bash(npx cap init:*)",
+      "Read(//home/pablo/Projetos/chronos.work/**)",
+      "Bash(npm run generate:openapi:*)",
+      "Bash(npm run:*)"
     ],
     "deny": [],
     "ask": []
