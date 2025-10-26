@@ -1,69 +1,68 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
-import Link from 'next/link';
+import { useState, FormEvent, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
+import { useAuth } from '../../contexts/AuthContext';
 import InteractiveBackground from '@/app/components/InteractiveBackground';
-import { useAuth } from '../contexts/AuthContext';
 
 type Tab = 'basicos' | 'pessoais' | 'endereco' | 'profissionais' | 'bancarios' | 'emergencia';
 
-export default function RegisterPage() {
-  const { register } = useAuth();
+function EmployeeRegisterContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { registerEmployee } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>('basicos');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
-  // Campos Básicos (obrigatórios)
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  // Get invitation code from URL params
+  const invitationCode = searchParams.get('code') || '';
 
-  // Dados Pessoais
-  const [cpf, setCpf] = useState('');
-  const [rg, setRg] = useState('');
-  const [birthDate, setBirthDate] = useState('');
-  const [gender, setGender] = useState('');
-  const [maritalStatus, setMaritalStatus] = useState('');
-  const [phone, setPhone] = useState('');
-  const [mobilePhone, setMobilePhone] = useState('');
-  const [education, setEducation] = useState('');
+  // Employee data
+  const [employeeData, setEmployeeData] = useState({
+    invitationCode: invitationCode,
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    cpf: '',
+    rg: '',
+    birthDate: '',
+    gender: '' as 'Masculino' | 'Feminino' | 'Outro' | 'Prefiro não informar' | '',
+    maritalStatus: '' as 'Solteiro(a)' | 'Casado(a)' | 'Divorciado(a)' | 'Viúvo(a)' | 'União Estável' | '',
+    phone: '',
+    mobilePhone: '',
+    address: '',
+    addressNumber: '',
+    addressComplement: '',
+    neighborhood: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    country: 'Brasil',
+    employeeId: '',
+    department: '',
+    position: '',
+    hireDate: '',
+    salary: '',
+    workSchedule: '',
+    employmentType: '' as 'CLT' | 'PJ' | 'Estagiário' | 'Freelancer' | 'Temporário' | 'Autônomo' | '',
+    directSupervisor: '',
+    bankName: '',
+    bankAccount: '',
+    bankAgency: '',
+    bankAccountType: '' as 'Corrente' | 'Poupança' | 'Salário' | '',
+    pix: '',
+    emergencyContactName: '',
+    emergencyContactPhone: '',
+    emergencyContactRelationship: '',
+    education: '' as 'Fundamental' | 'Médio' | 'Superior' | 'Pós-graduação' | 'Mestrado' | 'Doutorado' | '',
+    notes: '',
+  });
 
-  // Endereço
-  const [zipCode, setZipCode] = useState('');
-  const [address, setAddress] = useState('');
-  const [addressNumber, setAddressNumber] = useState('');
-  const [addressComplement, setAddressComplement] = useState('');
-  const [neighborhood, setNeighborhood] = useState('');
-  const [city, setCity] = useState('');
-  const [state, setState] = useState('');
-  const [country, setCountry] = useState('Brasil');
-
-  // Dados Profissionais
-  const [employeeId, setEmployeeId] = useState('');
-  const [department, setDepartment] = useState('');
-  const [position, setPosition] = useState('');
-  const [hireDate, setHireDate] = useState('');
-  const [salary, setSalary] = useState('');
-  const [workSchedule, setWorkSchedule] = useState('');
-  const [employmentType, setEmploymentType] = useState('');
-  const [directSupervisor, setDirectSupervisor] = useState('');
-
-  // Dados Bancários
-  const [bankName, setBankName] = useState('');
-  const [bankAccount, setBankAccount] = useState('');
-  const [bankAgency, setBankAgency] = useState('');
-  const [bankAccountType, setBankAccountType] = useState('');
-  const [pix, setPix] = useState('');
-
-  // Contato de Emergência
-  const [emergencyContactName, setEmergencyContactName] = useState('');
-  const [emergencyContactPhone, setEmergencyContactPhone] = useState('');
-  const [emergencyContactRelationship, setEmergencyContactRelationship] = useState('');
-  const [notes, setNotes] = useState('');
-
-  // Funções de formatação de máscaras
+  // Formatting functions
   const formatCPF = (value: string) => {
     const numbers = value.replace(/\D/g, '');
     if (numbers.length <= 3) return numbers;
@@ -92,25 +91,49 @@ export default function RegisterPage() {
     return `${numbers.slice(0, 5)}-${numbers.slice(5, 8)}`;
   };
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    let formattedValue = value;
+
+    // Apply formatting based on field type
+    if (name === 'cpf') {
+      formattedValue = formatCPF(value);
+    } else if (name === 'phone') {
+      formattedValue = formatPhone(value);
+    } else if (name === 'mobilePhone') {
+      formattedValue = formatMobilePhone(value);
+    } else if (name === 'zipCode') {
+      formattedValue = formatCEP(value);
+    }
+
+    setEmployeeData(prev => ({ ...prev, [name]: formattedValue }));
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
 
-    // Validação
-    if (password !== confirmPassword) {
+    // Validation
+    if (employeeData.password !== employeeData.confirmPassword) {
       setError('As senhas não correspondem');
       setActiveTab('basicos');
       return;
     }
 
-    if (password.length < 6) {
+    if (employeeData.password.length < 6) {
       setError('A senha deve ter pelo menos 6 caracteres');
       setActiveTab('basicos');
       return;
     }
 
-    if (name.length < 3) {
+    if (employeeData.name.length < 3) {
       setError('O nome deve ter pelo menos 3 caracteres');
+      setActiveTab('basicos');
+      return;
+    }
+
+    if (!employeeData.invitationCode) {
+      setError('Código de convite é obrigatório');
       setActiveTab('basicos');
       return;
     }
@@ -118,53 +141,52 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const requestBody: any = {
-        name,
-        email,
-        password,
+      // Prepare data for API
+      const requestData = {
+        invitationCode: employeeData.invitationCode,
+        name: employeeData.name,
+        email: employeeData.email,
+        password: employeeData.password,
+        // Add optional fields only if filled
+        ...(employeeData.cpf && { cpf: employeeData.cpf.replace(/\D/g, '') }),
+        ...(employeeData.rg && { rg: employeeData.rg }),
+        ...(employeeData.birthDate && { birthDate: employeeData.birthDate }),
+        ...(employeeData.gender && { gender: employeeData.gender }),
+        ...(employeeData.maritalStatus && { maritalStatus: employeeData.maritalStatus }),
+        ...(employeeData.phone && { phone: employeeData.phone }),
+        ...(employeeData.mobilePhone && { mobilePhone: employeeData.mobilePhone }),
+        ...(employeeData.address && { address: employeeData.address }),
+        ...(employeeData.addressNumber && { addressNumber: employeeData.addressNumber }),
+        ...(employeeData.addressComplement && { addressComplement: employeeData.addressComplement }),
+        ...(employeeData.neighborhood && { neighborhood: employeeData.neighborhood }),
+        ...(employeeData.city && { city: employeeData.city }),
+        ...(employeeData.state && { state: employeeData.state }),
+        ...(employeeData.zipCode && { zipCode: employeeData.zipCode.replace(/\D/g, '') }),
+        ...(employeeData.country && { country: employeeData.country }),
+        ...(employeeData.employeeId && { employeeId: employeeData.employeeId }),
+        ...(employeeData.department && { department: employeeData.department }),
+        ...(employeeData.position && { position: employeeData.position }),
+        ...(employeeData.hireDate && { hireDate: employeeData.hireDate }),
+        ...(employeeData.salary && { salary: parseFloat(employeeData.salary) }),
+        ...(employeeData.workSchedule && { workSchedule: employeeData.workSchedule }),
+        ...(employeeData.employmentType && { employmentType: employeeData.employmentType }),
+        ...(employeeData.directSupervisor && { directSupervisor: employeeData.directSupervisor }),
+        ...(employeeData.bankName && { bankName: employeeData.bankName }),
+        ...(employeeData.bankAccount && { bankAccount: employeeData.bankAccount }),
+        ...(employeeData.bankAgency && { bankAgency: employeeData.bankAgency }),
+        ...(employeeData.bankAccountType && { bankAccountType: employeeData.bankAccountType }),
+        ...(employeeData.pix && { pix: employeeData.pix }),
+        ...(employeeData.emergencyContactName && { emergencyContactName: employeeData.emergencyContactName }),
+        ...(employeeData.emergencyContactPhone && { emergencyContactPhone: employeeData.emergencyContactPhone }),
+        ...(employeeData.emergencyContactRelationship && { emergencyContactRelationship: employeeData.emergencyContactRelationship }),
+        ...(employeeData.education && { education: employeeData.education }),
+        ...(employeeData.notes && { notes: employeeData.notes }),
       };
 
-      // Adicionar campos opcionais apenas se preenchidos
-      if (cpf) requestBody.cpf = cpf.replace(/\D/g, '');
-      if (rg) requestBody.rg = rg;
-      if (birthDate) requestBody.birthDate = birthDate;
-      if (gender) requestBody.gender = gender;
-      if (maritalStatus) requestBody.maritalStatus = maritalStatus;
-      if (phone) requestBody.phone = phone;
-      if (mobilePhone) requestBody.mobilePhone = mobilePhone;
-      if (education) requestBody.education = education;
-
-      if (zipCode) requestBody.zipCode = zipCode.replace(/\D/g, '');
-      if (address) requestBody.address = address;
-      if (addressNumber) requestBody.addressNumber = addressNumber;
-      if (addressComplement) requestBody.addressComplement = addressComplement;
-      if (neighborhood) requestBody.neighborhood = neighborhood;
-      if (city) requestBody.city = city;
-      if (state) requestBody.state = state;
-      if (country) requestBody.country = country;
-
-      if (employeeId) requestBody.employeeId = employeeId;
-      if (department) requestBody.department = department;
-      if (position) requestBody.position = position;
-      if (hireDate) requestBody.hireDate = hireDate;
-      if (salary) requestBody.salary = parseFloat(salary);
-      if (workSchedule) requestBody.workSchedule = workSchedule;
-      if (employmentType) requestBody.employmentType = employmentType;
-      if (directSupervisor) requestBody.directSupervisor = directSupervisor;
-
-      if (bankName) requestBody.bankName = bankName;
-      if (bankAccount) requestBody.bankAccount = bankAccount;
-      if (bankAgency) requestBody.bankAgency = bankAgency;
-      if (bankAccountType) requestBody.bankAccountType = bankAccountType;
-      if (pix) requestBody.pix = pix;
-
-      if (emergencyContactName) requestBody.emergencyContactName = emergencyContactName;
-      if (emergencyContactPhone) requestBody.emergencyContactPhone = emergencyContactPhone;
-      if (emergencyContactRelationship) requestBody.emergencyContactRelationship = emergencyContactRelationship;
-      if (notes) requestBody.notes = notes;
-
-      await register(requestBody);
-    } catch (err) {
+      await registerEmployee(requestData);
+      setSuccess(true);
+      
+    } catch (err: any) {
       const errorMessage = err instanceof Error ? err.message : 'Ocorreu um erro. Tente novamente.';
       setError(errorMessage);
       console.error('Erro no cadastro:', err);
@@ -231,13 +253,56 @@ export default function RegisterPage() {
     },
   ];
 
+  if (success) {
+    return (
+      <div className="min-h-screen relative">
+        <InteractiveBackground />
+        
+        <div className="container-custom py-12 relative z-10">
+          <div className="max-w-md mx-auto text-center">
+            <div className="glass-container p-8">
+              <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-green-100 flex items-center justify-center">
+                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              
+              <h1 className="text-2xl font-bold text-warmGrey-900 mb-4">
+                <span className="gradient-text">Cadastro Realizado com Sucesso!</span>
+              </h1>
+              
+              <p className="text-warmGrey-700 mb-6">
+                Seu cadastro foi realizado com sucesso. Aguarde a aprovação do gestor para começar a usar o sistema.
+              </p>
+              
+              <div className="space-y-3">
+                <button
+                  onClick={() => router.push('/login')}
+                  className="btn-primary w-full"
+                >
+                  Fazer Login
+                </button>
+                <button
+                  onClick={() => router.push('/')}
+                  className="btn-secondary w-full"
+                >
+                  Voltar ao Início
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12 relative overflow-hidden">
       <InteractiveBackground />
 
       <div className="max-w-4xl w-full relative z-10">
         {/* Logo */}
-        <Link href="/" className="flex items-center justify-center gap-2 mb-8">
+        <div className="flex items-center justify-center gap-2 mb-8">
           <Image
             src="/logo.png"
             alt="Chronos.work"
@@ -245,14 +310,14 @@ export default function RegisterPage() {
             height={300}
             className="h-60 w-auto drop-shadow-lg"
           />
-        </Link>
+        </div>
 
         {/* Register Card */}
         <div className="glass-container p-8">
           <h1 className="text-4xl font-bold mb-2">
-            <span className="gradient-text">Criar uma conta</span>
+            <span className="gradient-text">Cadastro de Funcionário</span>
           </h1>
-          <p className="text-warmGrey-700 font-medium mb-6">Preencha seus dados para começar</p>
+          <p className="text-warmGrey-700 font-medium mb-6">Preencha seus dados para se juntar à empresa</p>
 
           {error && (
             <div className="bg-red-500/10 backdrop-blur-md border border-red-500/30 text-red-700 px-4 py-3 rounded-xl mb-6">
@@ -289,6 +354,23 @@ export default function RegisterPage() {
             {activeTab === 'basicos' && (
               <div className="space-y-4">
                 <div>
+                  <label htmlFor="invitationCode" className="label">
+                    Código de Convite <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="invitationCode"
+                    type="text"
+                    required
+                    className="input"
+                    placeholder="Digite o código de convite"
+                    value={employeeData.invitationCode}
+                    onChange={handleInputChange}
+                    disabled={loading}
+                  />
+                  <p className="text-xs text-warmGrey-600 mt-1">Código fornecido pelo gestor da empresa</p>
+                </div>
+
+                <div>
                   <label htmlFor="name" className="label">
                     Nome Completo <span className="text-red-500">*</span>
                   </label>
@@ -298,8 +380,8 @@ export default function RegisterPage() {
                     required
                     className="input"
                     placeholder="João Silva"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    value={employeeData.name}
+                    onChange={handleInputChange}
                     disabled={loading}
                     minLength={3}
                   />
@@ -315,8 +397,8 @@ export default function RegisterPage() {
                     required
                     className="input"
                     placeholder="voce@exemplo.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    value={employeeData.email}
+                    onChange={handleInputChange}
                     disabled={loading}
                   />
                 </div>
@@ -331,8 +413,8 @@ export default function RegisterPage() {
                     required
                     className="input"
                     placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    value={employeeData.password}
+                    onChange={handleInputChange}
                     disabled={loading}
                     minLength={6}
                   />
@@ -349,8 +431,8 @@ export default function RegisterPage() {
                     required
                     className="input"
                     placeholder="••••••••"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    value={employeeData.confirmPassword}
+                    onChange={handleInputChange}
                     disabled={loading}
                     minLength={6}
                   />
@@ -369,8 +451,8 @@ export default function RegisterPage() {
                       type="text"
                       className="input"
                       placeholder="000.000.000-00"
-                      value={cpf}
-                      onChange={(e) => setCpf(formatCPF(e.target.value))}
+                      value={employeeData.cpf}
+                      onChange={handleInputChange}
                       disabled={loading}
                       maxLength={14}
                     />
@@ -383,8 +465,8 @@ export default function RegisterPage() {
                       type="text"
                       className="input"
                       placeholder="00.000.000-0"
-                      value={rg}
-                      onChange={(e) => setRg(e.target.value)}
+                      value={employeeData.rg}
+                      onChange={handleInputChange}
                       disabled={loading}
                     />
                   </div>
@@ -397,8 +479,8 @@ export default function RegisterPage() {
                       id="birthDate"
                       type="date"
                       className="input"
-                      value={birthDate}
-                      onChange={(e) => setBirthDate(e.target.value)}
+                      value={employeeData.birthDate}
+                      onChange={handleInputChange}
                       disabled={loading}
                     />
                   </div>
@@ -408,8 +490,8 @@ export default function RegisterPage() {
                     <select
                       id="gender"
                       className="input"
-                      value={gender}
-                      onChange={(e) => setGender(e.target.value)}
+                      value={employeeData.gender}
+                      onChange={handleInputChange}
                       disabled={loading}
                     >
                       <option value="">Selecione...</option>
@@ -426,8 +508,8 @@ export default function RegisterPage() {
                   <select
                     id="maritalStatus"
                     className="input"
-                    value={maritalStatus}
-                    onChange={(e) => setMaritalStatus(e.target.value)}
+                    value={employeeData.maritalStatus}
+                    onChange={handleInputChange}
                     disabled={loading}
                   >
                     <option value="">Selecione...</option>
@@ -447,8 +529,8 @@ export default function RegisterPage() {
                       type="tel"
                       className="input"
                       placeholder="(00) 0000-0000"
-                      value={phone}
-                      onChange={(e) => setPhone(formatPhone(e.target.value))}
+                      value={employeeData.phone}
+                      onChange={handleInputChange}
                       disabled={loading}
                       maxLength={14}
                     />
@@ -461,8 +543,8 @@ export default function RegisterPage() {
                       type="tel"
                       className="input"
                       placeholder="(00) 90000-0000"
-                      value={mobilePhone}
-                      onChange={(e) => setMobilePhone(formatMobilePhone(e.target.value))}
+                      value={employeeData.mobilePhone}
+                      onChange={handleInputChange}
                       disabled={loading}
                       maxLength={15}
                     />
@@ -474,8 +556,8 @@ export default function RegisterPage() {
                   <select
                     id="education"
                     className="input"
-                    value={education}
-                    onChange={(e) => setEducation(e.target.value)}
+                    value={employeeData.education}
+                    onChange={handleInputChange}
                     disabled={loading}
                   >
                     <option value="">Selecione...</option>
@@ -501,22 +583,22 @@ export default function RegisterPage() {
                       type="text"
                       className="input"
                       placeholder="00000-000"
-                      value={zipCode}
-                      onChange={(e) => setZipCode(formatCEP(e.target.value))}
+                      value={employeeData.zipCode}
+                      onChange={handleInputChange}
                       disabled={loading}
                       maxLength={9}
                     />
                   </div>
 
                   <div className="md:col-span-2">
-                    <label htmlFor="address" className="label">Logradouro</label>
+                    <label htmlFor="address" className="label">Endereço</label>
                     <input
                       id="address"
                       type="text"
                       className="input"
-                      placeholder="Rua das Flores"
-                      value={address}
-                      onChange={(e) => setAddress(e.target.value)}
+                      placeholder="Rua, Avenida, etc."
+                      value={employeeData.address}
+                      onChange={handleInputChange}
                       disabled={loading}
                     />
                   </div>
@@ -530,79 +612,79 @@ export default function RegisterPage() {
                       type="text"
                       className="input"
                       placeholder="123"
-                      value={addressNumber}
-                      onChange={(e) => setAddressNumber(e.target.value)}
+                      value={employeeData.addressNumber}
+                      onChange={handleInputChange}
                       disabled={loading}
                     />
                   </div>
 
-                  <div className="md:col-span-2">
+                  <div>
                     <label htmlFor="addressComplement" className="label">Complemento</label>
                     <input
                       id="addressComplement"
                       type="text"
                       className="input"
-                      placeholder="Apto 45"
-                      value={addressComplement}
-                      onChange={(e) => setAddressComplement(e.target.value)}
+                      placeholder="Apto, Sala, etc."
+                      value={employeeData.addressComplement}
+                      onChange={handleInputChange}
+                      disabled={loading}
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="neighborhood" className="label">Bairro</label>
+                    <input
+                      id="neighborhood"
+                      type="text"
+                      className="input"
+                      placeholder="Centro"
+                      value={employeeData.neighborhood}
+                      onChange={handleInputChange}
                       disabled={loading}
                     />
                   </div>
                 </div>
 
-                <div>
-                  <label htmlFor="neighborhood" className="label">Bairro</label>
-                  <input
-                    id="neighborhood"
-                    type="text"
-                    className="input"
-                    placeholder="Centro"
-                    value={neighborhood}
-                    onChange={(e) => setNeighborhood(e.target.value)}
-                    disabled={loading}
-                  />
-                </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="md:col-span-2">
+                  <div>
                     <label htmlFor="city" className="label">Cidade</label>
                     <input
                       id="city"
                       type="text"
                       className="input"
                       placeholder="São Paulo"
-                      value={city}
-                      onChange={(e) => setCity(e.target.value)}
+                      value={employeeData.city}
+                      onChange={handleInputChange}
                       disabled={loading}
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="state" className="label">UF</label>
+                    <label htmlFor="state" className="label">Estado</label>
                     <input
                       id="state"
                       type="text"
                       className="input"
                       placeholder="SP"
-                      value={state}
-                      onChange={(e) => setState(e.target.value.toUpperCase())}
+                      value={employeeData.state}
+                      onChange={handleInputChange}
                       disabled={loading}
                       maxLength={2}
                     />
                   </div>
-                </div>
 
-                <div>
-                  <label htmlFor="country" className="label">País</label>
-                  <input
-                    id="country"
-                    type="text"
-                    className="input"
-                    placeholder="Brasil"
-                    value={country}
-                    onChange={(e) => setCountry(e.target.value)}
-                    disabled={loading}
-                  />
+                  <div>
+                    <label htmlFor="country" className="label">País</label>
+                    <input
+                      id="country"
+                      type="text"
+                      className="input"
+                      placeholder="Brasil"
+                      value={employeeData.country}
+                      onChange={handleInputChange}
+                      disabled={loading}
+                    />
+                  </div>
                 </div>
               </div>
             )}
@@ -612,14 +694,14 @@ export default function RegisterPage() {
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="employeeId" className="label">Matrícula</label>
+                    <label htmlFor="employeeId" className="label">ID do Funcionário</label>
                     <input
                       id="employeeId"
                       type="text"
                       className="input"
                       placeholder="EMP001"
-                      value={employeeId}
-                      onChange={(e) => setEmployeeId(e.target.value)}
+                      value={employeeData.employeeId}
+                      onChange={handleInputChange}
                       disabled={loading}
                     />
                   </div>
@@ -630,40 +712,42 @@ export default function RegisterPage() {
                       id="department"
                       type="text"
                       className="input"
-                      placeholder="TI"
-                      value={department}
-                      onChange={(e) => setDepartment(e.target.value)}
+                      placeholder="TI, RH, Vendas, etc."
+                      value={employeeData.department}
+                      onChange={handleInputChange}
                       disabled={loading}
                     />
                   </div>
-                </div>
-
-                <div>
-                  <label htmlFor="position" className="label">Cargo</label>
-                  <input
-                    id="position"
-                    type="text"
-                    className="input"
-                    placeholder="Desenvolvedor Full Stack"
-                    value={position}
-                    onChange={(e) => setPosition(e.target.value)}
-                    disabled={loading}
-                  />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="hireDate" className="label">Data de Contratação</label>
+                    <label htmlFor="position" className="label">Cargo</label>
                     <input
-                      id="hireDate"
-                      type="date"
+                      id="position"
+                      type="text"
                       className="input"
-                      value={hireDate}
-                      onChange={(e) => setHireDate(e.target.value)}
+                      placeholder="Desenvolvedor, Analista, etc."
+                      value={employeeData.position}
+                      onChange={handleInputChange}
                       disabled={loading}
                     />
                   </div>
 
+                  <div>
+                    <label htmlFor="hireDate" className="label">Data de Admissão</label>
+                    <input
+                      id="hireDate"
+                      type="date"
+                      className="input"
+                      value={employeeData.hireDate}
+                      onChange={handleInputChange}
+                      disabled={loading}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label htmlFor="salary" className="label">Salário</label>
                     <input
@@ -671,58 +755,60 @@ export default function RegisterPage() {
                       type="number"
                       className="input"
                       placeholder="5000.00"
-                      value={salary}
-                      onChange={(e) => setSalary(e.target.value)}
+                      value={employeeData.salary}
+                      onChange={handleInputChange}
                       disabled={loading}
-                      step="0.01"
                       min="0"
+                      step="0.01"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="workSchedule" className="label">Horário de Trabalho</label>
+                    <input
+                      id="workSchedule"
+                      type="text"
+                      className="input"
+                      placeholder="08:00 às 17:00"
+                      value={employeeData.workSchedule}
+                      onChange={handleInputChange}
+                      disabled={loading}
                     />
                   </div>
                 </div>
 
-                <div>
-                  <label htmlFor="workSchedule" className="label">Jornada de Trabalho</label>
-                  <input
-                    id="workSchedule"
-                    type="text"
-                    className="input"
-                    placeholder="Segunda a Sexta, 9h às 18h"
-                    value={workSchedule}
-                    onChange={(e) => setWorkSchedule(e.target.value)}
-                    disabled={loading}
-                  />
-                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="employmentType" className="label">Tipo de Contrato</label>
+                    <select
+                      id="employmentType"
+                      className="input"
+                      value={employeeData.employmentType}
+                      onChange={handleInputChange}
+                      disabled={loading}
+                    >
+                      <option value="">Selecione...</option>
+                      <option value="CLT">CLT</option>
+                      <option value="PJ">PJ</option>
+                      <option value="Estagiário">Estagiário</option>
+                      <option value="Freelancer">Freelancer</option>
+                      <option value="Temporário">Temporário</option>
+                      <option value="Autônomo">Autônomo</option>
+                    </select>
+                  </div>
 
-                <div>
-                  <label htmlFor="employmentType" className="label">Tipo de Contrato</label>
-                  <select
-                    id="employmentType"
-                    className="input"
-                    value={employmentType}
-                    onChange={(e) => setEmploymentType(e.target.value)}
-                    disabled={loading}
-                  >
-                    <option value="">Selecione...</option>
-                    <option value="CLT">CLT</option>
-                    <option value="PJ">PJ</option>
-                    <option value="Estagiário">Estagiário</option>
-                    <option value="Freelancer">Freelancer</option>
-                    <option value="Temporário">Temporário</option>
-                    <option value="Autônomo">Autônomo</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label htmlFor="directSupervisor" className="label">Supervisor Direto</label>
-                  <input
-                    id="directSupervisor"
-                    type="text"
-                    className="input"
-                    placeholder="João Santos"
-                    value={directSupervisor}
-                    onChange={(e) => setDirectSupervisor(e.target.value)}
-                    disabled={loading}
-                  />
+                  <div>
+                    <label htmlFor="directSupervisor" className="label">Supervisor Direto</label>
+                    <input
+                      id="directSupervisor"
+                      type="text"
+                      className="input"
+                      placeholder="Nome do supervisor"
+                      value={employeeData.directSupervisor}
+                      onChange={handleInputChange}
+                      disabled={loading}
+                    />
+                  </div>
                 </div>
               </div>
             )}
@@ -730,29 +816,16 @@ export default function RegisterPage() {
             {/* Dados Bancários */}
             {activeTab === 'bancarios' && (
               <div className="space-y-4">
-                <div>
-                  <label htmlFor="bankName" className="label">Banco</label>
-                  <input
-                    id="bankName"
-                    type="text"
-                    className="input"
-                    placeholder="Banco do Brasil"
-                    value={bankName}
-                    onChange={(e) => setBankName(e.target.value)}
-                    disabled={loading}
-                  />
-                </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="bankAgency" className="label">Agência</label>
+                    <label htmlFor="bankName" className="label">Banco</label>
                     <input
-                      id="bankAgency"
+                      id="bankName"
                       type="text"
                       className="input"
-                      placeholder="1234"
-                      value={bankAgency}
-                      onChange={(e) => setBankAgency(e.target.value)}
+                      placeholder="Banco do Brasil"
+                      value={employeeData.bankName}
+                      onChange={handleInputChange}
                       disabled={loading}
                     />
                   </div>
@@ -764,38 +837,53 @@ export default function RegisterPage() {
                       type="text"
                       className="input"
                       placeholder="12345-6"
-                      value={bankAccount}
-                      onChange={(e) => setBankAccount(e.target.value)}
+                      value={employeeData.bankAccount}
+                      onChange={handleInputChange}
                       disabled={loading}
                     />
                   </div>
                 </div>
 
-                <div>
-                  <label htmlFor="bankAccountType" className="label">Tipo de Conta</label>
-                  <select
-                    id="bankAccountType"
-                    className="input"
-                    value={bankAccountType}
-                    onChange={(e) => setBankAccountType(e.target.value)}
-                    disabled={loading}
-                  >
-                    <option value="">Selecione...</option>
-                    <option value="Corrente">Corrente</option>
-                    <option value="Poupança">Poupança</option>
-                    <option value="Salário">Salário</option>
-                  </select>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="bankAgency" className="label">Agência</label>
+                    <input
+                      id="bankAgency"
+                      type="text"
+                      className="input"
+                      placeholder="1234"
+                      value={employeeData.bankAgency}
+                      onChange={handleInputChange}
+                      disabled={loading}
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="bankAccountType" className="label">Tipo de Conta</label>
+                    <select
+                      id="bankAccountType"
+                      className="input"
+                      value={employeeData.bankAccountType}
+                      onChange={handleInputChange}
+                      disabled={loading}
+                    >
+                      <option value="">Selecione...</option>
+                      <option value="Corrente">Corrente</option>
+                      <option value="Poupança">Poupança</option>
+                      <option value="Salário">Salário</option>
+                    </select>
+                  </div>
                 </div>
 
                 <div>
-                  <label htmlFor="pix" className="label">Chave PIX</label>
+                  <label htmlFor="pix" className="label">PIX</label>
                   <input
                     id="pix"
                     type="text"
                     className="input"
-                    placeholder="seu@email.com ou CPF"
-                    value={pix}
-                    onChange={(e) => setPix(e.target.value)}
+                    placeholder="Chave PIX (CPF, email, telefone, etc.)"
+                    value={employeeData.pix}
+                    onChange={handleInputChange}
                     disabled={loading}
                   />
                 </div>
@@ -805,100 +893,97 @@ export default function RegisterPage() {
             {/* Contato de Emergência */}
             {activeTab === 'emergencia' && (
               <div className="space-y-4">
-                <div>
-                  <label htmlFor="emergencyContactName" className="label">Nome do Contato</label>
-                  <input
-                    id="emergencyContactName"
-                    type="text"
-                    className="input"
-                    placeholder="Maria Silva"
-                    value={emergencyContactName}
-                    onChange={(e) => setEmergencyContactName(e.target.value)}
-                    disabled={loading}
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label htmlFor="emergencyContactName" className="label">Nome</label>
+                    <input
+                      id="emergencyContactName"
+                      type="text"
+                      className="input"
+                      placeholder="Nome do contato"
+                      value={employeeData.emergencyContactName}
+                      onChange={handleInputChange}
+                      disabled={loading}
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="emergencyContactPhone" className="label">Telefone</label>
+                    <input
+                      id="emergencyContactPhone"
+                      type="tel"
+                      className="input"
+                      placeholder="(00) 90000-0000"
+                      value={employeeData.emergencyContactPhone}
+                      onChange={handleInputChange}
+                      disabled={loading}
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="emergencyContactRelationship" className="label">Parentesco</label>
+                    <input
+                      id="emergencyContactRelationship"
+                      type="text"
+                      className="input"
+                      placeholder="Pai, Mãe, Cônjuge, etc."
+                      value={employeeData.emergencyContactRelationship}
+                      onChange={handleInputChange}
+                      disabled={loading}
+                    />
+                  </div>
                 </div>
 
                 <div>
-                  <label htmlFor="emergencyContactPhone" className="label">Telefone do Contato</label>
-                  <input
-                    id="emergencyContactPhone"
-                    type="tel"
-                    className="input"
-                    placeholder="(00) 90000-0000"
-                    value={emergencyContactPhone}
-                    onChange={(e) => setEmergencyContactPhone(formatMobilePhone(e.target.value))}
-                    disabled={loading}
-                    maxLength={15}
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="emergencyContactRelationship" className="label">Parentesco</label>
-                  <input
-                    id="emergencyContactRelationship"
-                    type="text"
-                    className="input"
-                    placeholder="Mãe, Pai, Cônjuge..."
-                    value={emergencyContactRelationship}
-                    onChange={(e) => setEmergencyContactRelationship(e.target.value)}
-                    disabled={loading}
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="notes" className="label">Observações Adicionais</label>
+                  <label htmlFor="notes" className="label">Observações</label>
                   <textarea
                     id="notes"
-                    className="input"
-                    placeholder="Informações adicionais relevantes..."
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
+                    className="input min-h-[100px] resize-y"
+                    placeholder="Informações adicionais..."
+                    value={employeeData.notes}
+                    onChange={(e) => setEmployeeData(prev => ({ ...prev, notes: e.target.value }))}
                     disabled={loading}
-                    rows={4}
                   />
                 </div>
               </div>
             )}
 
+            {/* Action Buttons */}
             <div className="flex gap-4 mt-8">
               <button
+                type="button"
+                onClick={() => router.push('/')}
+                className="btn-secondary flex-1"
+                disabled={loading}
+              >
+                Cancelar
+              </button>
+              <button
                 type="submit"
-                className="btn-primary flex-1 text-lg py-4"
+                className="btn-primary flex-1"
                 disabled={loading}
               >
                 {loading ? (
-                  <span className="flex items-center gap-2">
-                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    Criando conta...
-                  </span>
+                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
                 ) : (
-                  'Criar conta'
+                  'Cadastrar Funcionário'
                 )}
               </button>
             </div>
           </form>
-
-          <div className="mt-6 text-center text-sm">
-            <span className="text-warmGrey-700">Já tem uma conta? </span>
-            <Link href="/login" className="gradient-text font-semibold hover:opacity-80 transition-opacity">
-              Entrar
-            </Link>
-          </div>
-        </div>
-
-        {/* Back to Home */}
-        <div className="text-center mt-6">
-          <Link href="/" className="inline-flex items-center gap-2 text-warmGrey-700 hover:text-warmGrey-900 transition-colors font-medium px-4 py-2 rounded-xl hover:bg-white/20 backdrop-blur-sm">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            Voltar para a página inicial
-          </Link>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function EmployeeRegisterPage() {
+  return (
+    <Suspense fallback={<div>Carregando...</div>}>
+      <EmployeeRegisterContent />
+    </Suspense>
   );
 }

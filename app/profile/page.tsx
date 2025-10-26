@@ -92,7 +92,9 @@ export default function ProfilePage() {
       setSuccess('Perfil atualizado com sucesso!');
 
       // Scroll to top to show success message
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao atualizar perfil');
     } finally {

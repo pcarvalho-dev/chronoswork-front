@@ -24,7 +24,11 @@
       "Bash(npx cap init:*)",
       "Read(//home/pablo/Projetos/chronos.work/**)",
       "Bash(npm run generate:openapi:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(lsof:*)",
+      "Bash(pkill:*)",
+      "Bash(ss:*)",
+      "Bash(kill:*)"
     ],
     "deny": [],
     "ask": []

@@ -28,6 +28,12 @@ export default function CameraCapture({ onCapture, onCancel, title }: CameraCapt
       setLoading(true);
       setError('');
 
+      if (typeof window === 'undefined' || !navigator.mediaDevices) {
+        setError('Câmera não disponível neste ambiente.');
+        setLoading(false);
+        return;
+      }
+
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: 'user', // Câmera frontal

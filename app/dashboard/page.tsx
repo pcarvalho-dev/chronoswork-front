@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { api, TimeLog } from '../lib/api';
-import InteractiveBackground from '../components/InteractiveBackground';
+import InteractiveBackground from '@/app/components/InteractiveBackground';
 import CameraCapture from '../components/CameraCapture';
 import PhotoViewer, { PhotoData } from '../components/PhotoViewer';
 import { useAuth } from '../contexts/AuthContext';
@@ -77,7 +78,8 @@ const inspirationalQuotes = [
 ];
 
 export default function DashboardPage() {
-  const { user, logout, refreshUserProfile, loading: authLoading } = useAuth();
+  const router = useRouter();
+  const { user, logout, refreshUserProfile, loading: authLoading, isManager } = useAuth();
   const [timeLogs, setTimeLogs] = useState<TimeLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -111,6 +113,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     setIsClient(true);
+    
     setDailyQuote(inspirationalQuotes[Math.floor(Math.random() * inspirationalQuotes.length)]);
     fetchTimeLogs();
     fetchWeather();
@@ -669,7 +672,7 @@ export default function DashboardPage() {
                         onClick={() => {
                           setShowProfileMenu(false);
                           setShowPhotoOptions(false);
-                          window.location.href = '/profile';
+                          router.push('/profile');
                         }}
                         className="btn-ghost w-full text-sm"
                       >

@@ -38,8 +38,10 @@ export default function PhotoViewer({ photos, initialIndex, onClose }: PhotoView
   };
 
   useEffect(() => {
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    if (typeof window !== 'undefined') {
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
   }, []);
 
   const currentPhoto = photos[currentIndex];

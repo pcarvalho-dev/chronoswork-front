@@ -3,7 +3,7 @@
 import { useState, FormEvent } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import InteractiveBackground from '../components/InteractiveBackground';
+import InteractiveBackground from '@/app/components/InteractiveBackground';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function LoginPage() {

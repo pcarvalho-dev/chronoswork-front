@@ -4,7 +4,7 @@ import { useState, FormEvent, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
-import InteractiveBackground from '../components/InteractiveBackground';
+import InteractiveBackground from '@/app/components/InteractiveBackground';
 
 function ResetPasswordForm() {
   const router = useRouter();

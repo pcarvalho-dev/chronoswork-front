@@ -2,17 +2,21 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { api, User, RegisterData, UpdateProfileData } from '@/app/lib/api';
+import { api, User, RegisterData, UpdateProfileData, ManagerRegisterData, EmployeeRegisterData, ManagerRegisterResponse, EmployeeRegisterResponse } from '@/app/lib/api';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (userData: RegisterData) => Promise<void>;
+  registerManager: (managerData: ManagerRegisterData) => Promise<ManagerRegisterResponse>;
+  registerEmployee: (employeeData: EmployeeRegisterData) => Promise<EmployeeRegisterResponse>;
   logout: () => Promise<void>;
   refreshUserProfile: () => Promise<void>;
   updateProfile: (userData: UpdateProfileData) => Promise<void>;
   isAuthenticated: boolean;
+  isManager: boolean;
+  isEmployee: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -24,6 +28,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Load user profile on mount
   const loadUserProfile = useCallback(async () => {
+    // Only run on client side
+    if (typeof window === 'undefined') {
+      setLoading(false);
+      return;
+    }
+
     try {
       const token = api.getAccessToken();
       if (!token) {
@@ -58,13 +68,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string) => {
     const response = await api.login(email, password);
     setUser(response.user);
-    router.push('/dashboard');
+    // Redirect based on user role
+    if (response.user.role === 'manager') {
+      router.push('/manager');
+    } else {
+      router.push('/dashboard');
+    }
   };
 
   const register = async (userData: RegisterData) => {
     const response = await api.register(userData);
     setUser(response.user);
-    router.push('/dashboard');
+    // Redirect based on user role
+    if (response.user.role === 'manager') {
+      router.push('/manager');
+    } else {
+      router.push('/dashboard');
+    }
+  };
+
+  const registerManager = async (managerData: ManagerRegisterData) => {
+    const response = await api.registerManager(managerData);
+    setUser(response.user);
+    // Manager is automatically approved and redirected to manager dashboard
+    router.push('/manager');
+    return response;
+  };
+
+  const registerEmployee = async (employeeData: EmployeeRegisterData) => {
+    const response = await api.registerEmployee(employeeData);
+    setUser(response.user);
+    // Employee needs approval, redirect to waiting page
+    router.push('/dashboard?pending=approval');
+    return response;
   };
 
   const logout = async () => {
@@ -98,10 +134,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loading,
     login,
     register,
+    registerManager,
+    registerEmployee,
     logout,
     refreshUserProfile,
     updateProfile,
     isAuthenticated: !!user,
+    isManager: user?.role === 'manager',
+    isEmployee: user?.role === 'employee',
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

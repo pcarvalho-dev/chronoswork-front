@@ -10,12 +10,12 @@ export default function Hero() {
             <span className="text-primary-600"> sem esforço</span>
           </h1>
           <p className="text-xl md:text-2xl text-warmGrey-600 mb-12 max-w-3xl mx-auto">
-            Chronos.work é uma solução moderna de controle de tempo que ajuda você a monitorar suas horas de trabalho
-            com funcionalidade simples de entrada e saída.
+            Chronos.work é uma solução moderna de controle de tempo para empresas que permite gestores criarem suas empresas
+            e convidarem funcionários para um sistema completo de gestão de horas trabalhadas.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Link href="/register" className="btn-primary text-lg px-8 py-4">
-              Começar Agora
+            <Link href="/manager/register" className="btn-primary text-lg px-8 py-4">
+              Sou Gestor
               <svg
                 className="w-5 h-5"
                 fill="none"
@@ -26,11 +26,27 @@ export default function Hero() {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-                  d="M13 7l5 5m0 0l-5 5m5-5H6"
+                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
                 />
               </svg>
             </Link>
-            <a href="http://localhost:8000/docs" target="_blank" rel="noopener noreferrer" className="btn-secondary text-lg px-8 py-4">
+            <Link href="/employee/register" className="btn-secondary text-lg px-8 py-4">
+              Sou Funcionário
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                />
+              </svg>
+            </Link>
+            <a href="http://localhost:8000/docs" target="_blank" rel="noopener noreferrer" className="btn-ghost text-lg px-8 py-4">
               Ver Documentação
             </a>
           </div>

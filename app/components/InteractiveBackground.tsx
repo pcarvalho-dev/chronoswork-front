@@ -7,6 +7,8 @@ export default function InteractiveBackground() {
   const [isHovering, setIsHovering] = useState(false);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
     let lastUpdate = 0;
     const throttleMs = 32; // ~30fps for smoother but less resource intensive
 
