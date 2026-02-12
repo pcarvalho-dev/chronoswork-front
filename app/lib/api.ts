@@ -57,9 +57,6 @@ class ApiClient {
       const token = this.getAccessToken();
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
-      } else {
-        console.error('No access token found for authenticated request to:', endpoint);
-        throw new Error('Você precisa fazer login para acessar esta funcionalidade');
       }
     }
 
@@ -90,10 +87,10 @@ class ApiClient {
 
         try {
           await this.refreshPromise;
-          // Retry the original request with new token
+          // Retry of original request with new token
           return this.request<T>(endpoint, options, useAuth, true);
         } catch (refreshError) {
-          // If refresh failed, throw the original 401 error
+          // If refresh failed, throw to original 401 error
           const error = await response.json().catch(() => ({ message: 'Unauthorized' }));
           throw new Error(error.message || 'Unauthorized');
         }
@@ -106,14 +103,16 @@ class ApiClient {
 
       return response.json();
     } catch (error) {
-      console.error('API request failed:', error);
+      // Remove console.error for production
+      if (process.env.NODE_ENV === 'development') {
+        console.error('API request failed:', error);
+      }
       throw error;
     }
   }
 
   // Auth endpoints
   async login(email: string, password: string): Promise<AuthResponse> {
-    console.log('Attempting login for:', email);
     const response = await this.request<AuthResponse>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
@@ -122,9 +121,6 @@ class ApiClient {
     // Store tokens
     if (response.accessToken && response.refreshToken) {
       this.setTokens(response.accessToken, response.refreshToken);
-      console.log('Login successful, tokens stored');
-    } else {
-      console.warn('Login response missing tokens:', response);
     }
 
     return response;
@@ -232,19 +228,6 @@ class ApiClient {
     formData.append('latitude', latitude.toString());
     formData.append('longitude', longitude.toString());
 
-    // Debug: Log dos dados sendo enviados
-    console.log('Check-in data:', {
-      photo: photo.name,
-      latitude: latitude,
-      longitude: longitude
-    });
-
-    // Debug: Log de todos os campos do FormData
-    console.log('FormData fields:');
-    for (const [key, value] of formData.entries()) {
-      console.log(`  ${key}:`, value instanceof File ? `File(${value.name})` : value);
-    }
-
     const token = this.getAccessToken();
     if (!token) {
       throw new Error('Você precisa fazer login para fazer check-in');
@@ -275,19 +258,6 @@ class ApiClient {
     formData.append('latitude', latitude.toString());
     formData.append('longitude', longitude.toString());
 
-    // Debug: Log dos dados sendo enviados
-    console.log('Check-out data:', {
-      photo: photo.name,
-      latitude: latitude,
-      longitude: longitude
-    });
-
-    // Debug: Log de todos os campos do FormData
-    console.log('FormData fields:');
-    for (const [key, value] of formData.entries()) {
-      console.log(`  ${key}:`, value instanceof File ? `File(${value.name})` : value);
-    }
-
     const token = this.getAccessToken();
     if (!token) {
       throw new Error('Você precisa fazer login para fazer check-out');
@@ -317,9 +287,9 @@ class ApiClient {
     if (endDate) params.append('endDate', endDate);
 
     const queryString = params.toString();
-    const url = queryString ? `/timelog?${queryString}` : '/timelog';
+    const endpoint = queryString ? `/timelog?${queryString}` : '/timelog';
 
-    return this.request<TimeLog[]>(url, {}, true);
+    return this.request<TimeLog[]>(endpoint, {}, true);
   }
 
   // Manager registration
@@ -347,11 +317,11 @@ class ApiClient {
 
   // Company management
   async getCompany(): Promise<{ company: Company }> {
-    return this.request<{ company: Company }>('/manager/company', {}, true);
+    return this.request<{ company: Company }>(`/manager/company`, {}, true);
   }
 
   async updateCompany(companyData: UpdateCompanyData): Promise<{ message: string; company: Company }> {
-    return this.request<{ message: string; company: Company }>('/manager/company', {
+    return this.request<{ message: string; company: Company }>(`/manager/company`, {
       method: 'PUT',
       body: JSON.stringify(companyData),
     }, true);
@@ -359,7 +329,7 @@ class ApiClient {
 
   // Invitation management
   async createInvitation(invitationData: CreateInvitationData): Promise<{ message: string; invitation: Invitation }> {
-    return this.request<{ message: string; invitation: Invitation }>('/manager/invitations', {
+    return this.request<{ message: string; invitation: Invitation }>(`/manager/invitations`, {
       method: 'POST',
       body: JSON.stringify(invitationData),
     }, true);
@@ -413,7 +383,7 @@ class ApiClient {
   }
 
   async createUser(userData: CreateUserData): Promise<{ message: string; user: User }> {
-    return this.request<{ message: string; user: User }>('/manager/users', {
+    return this.request<{ message: string; user: User }>(`/manager/users`, {
       method: 'POST',
       body: JSON.stringify(userData),
     }, true);
@@ -439,7 +409,7 @@ class ApiClient {
   }
 
   async changeUserPassword(id: number, newPassword: string): Promise<{ message: string }> {
-    return this.request<{ message: string }>('/manager/users/change-password', {
+    return this.request<{ message: string }>(`/manager/users/change-password`, {
       method: 'POST',
       body: JSON.stringify({ userId: id, newPassword }),
     }, true);
@@ -454,14 +424,14 @@ class ApiClient {
   }
 
   async createManualTimeLog(data: ManualTimeLogData): Promise<{ message: string; timeLog: TimeLog }> {
-    return this.request<{ message: string; timeLog: TimeLog }>('/manager/time-logs/manual', {
+    return this.request<{ message: string; timeLog: TimeLog }>(`/manager/time-logs/manual`, {
       method: 'POST',
       body: JSON.stringify(data),
     }, true);
   }
 
   async approveTimeLog(timeLogId: number, approved: boolean, rejectionReason?: string): Promise<{ message: string; timeLog: TimeLog }> {
-    return this.request<{ message: string; timeLog: TimeLog }>('/manager/time-logs/approve', {
+    return this.request<{ message: string; timeLog: TimeLog }>(`/manager/time-logs/approve`, {
       method: 'POST',
       body: JSON.stringify({ timeLogId, approved, rejectionReason }),
     }, true);
@@ -500,7 +470,6 @@ export interface TimeLog {
   user?: {
     id: number;
     name: string;
-    email: string;
   };
 }
 
@@ -573,8 +542,8 @@ export interface Company {
   description?: string;
   logo?: string;
   isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Invitation {
@@ -594,8 +563,8 @@ export interface Invitation {
   company?: Company;
   createdBy?: User;
   usedBy?: User;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface RegisterData {
@@ -727,6 +696,7 @@ export interface CreateUserData {
   emergencyContactRelationship?: string;
   education?: string;
   notes?: string;
+  isActive?: boolean;
 }
 
 export interface UpdateUserData {

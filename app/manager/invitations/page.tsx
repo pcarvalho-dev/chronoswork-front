@@ -375,7 +375,7 @@ export default function InvitationsManagementPage() {
                             </code>
                           </div>
                           <div>
-                            <span className="font-medium">Criado em:</span> {formatDate(invitation.createdAt)}
+                            <span className="font-medium">Criado em:</span> {invitation.createdAt ? formatDate(invitation.createdAt) : '-'}
                           </div>
                           {invitation.expiresAt && (
                             <div>
