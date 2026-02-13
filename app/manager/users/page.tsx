@@ -1,18 +1,29 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import Image from 'next/image';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { api, User, UsersResponse } from '@/app/lib/api';
 import { useAuth } from '@/app/contexts/AuthContext';
 import InteractiveBackground from '@/app/components/InteractiveBackground';
+import ManagerNavbar from '@/app/components/ManagerNavbar';
+import CustomSelect from '@/app/components/CustomSelect';
 
 export default function UsersPage() {
-  const { isManager } = useAuth();
+  return (
+    <Suspense>
+      <UsersPageContent />
+    </Suspense>
+  );
+}
+
+function UsersPageContent() {
+  const { isManager, loading: authLoading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [info, setInfo] = useState('');
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
@@ -21,26 +32,28 @@ export default function UsersPage() {
   });
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || '');
   const [showDeleteModal, setShowDeleteModal] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   // Redirect if not manager
   useEffect(() => {
-    if (!isManager) {
+    if (!authLoading && !isManager) {
       router.push('/login');
     }
-  }, [isManager, router]);
+  }, [authLoading, isManager, router]);
 
   useEffect(() => {
     if (isManager) {
       fetchUsers();
     }
-  }, [isManager, pagination.page, search, roleFilter]);
+  }, [isManager, pagination.page, search, roleFilter, statusFilter]);
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
       setError('');
+      setInfo('');
 
       // Try to fetch users, but don't fail if endpoint doesn't exist
       let usersData: User[] = [];
@@ -85,11 +98,18 @@ export default function UsersPage() {
         }
       }
 
+      // Apply status filter on frontend
+      if (statusFilter === 'active') {
+        usersData = usersData.filter(u => u.isActive);
+      } else if (statusFilter === 'inactive') {
+        usersData = usersData.filter(u => !u.isActive);
+      }
+
       setUsers(usersData);
       setPagination(paginationData);
-      
+
       if (usersData.length === 0) {
-        setError('Nenhum usuário encontrado. Verifique se há usuários cadastrados.');
+        setInfo('Nenhum usuário encontrado. Verifique se há usuários cadastrados.');
       }
     } catch (err: any) {
       console.error('Error fetching users:', err);
@@ -136,52 +156,15 @@ export default function UsersPage() {
     });
   };
 
-  if (!isManager) {
-    return null; // Will redirect
+  if (authLoading || !isManager) {
+    return null;
   }
 
   return (
     <div className="min-h-screen relative">
       <InteractiveBackground />
 
-      {/* Header */}
-      <nav className="bg-white/70 backdrop-blur-lg border-b border-white/30 sticky top-0 z-50">
-        <div className="container-custom">
-          <div className="flex items-center justify-between h-navbar">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => router.push('/manager')}
-                className="p-2 rounded-lg hover:bg-white/50 transition-colors"
-              >
-                <svg className="w-6 h-6 text-warmGrey-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-              </button>
-              <div className="flex items-center gap-2">
-                <Image
-                  src="/logo.png"
-                  alt="Chronos.work"
-                  width={1200}
-                  height={320}
-                  className="h-60 w-auto drop-shadow-lg"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => router.push('/manager/users/new')}
-                className="btn-primary"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Novo Usuário
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <ManagerNavbar />
 
       {/* Main Content */}
       <div className="container-custom py-12 relative z-10">
@@ -192,6 +175,15 @@ export default function UsersPage() {
             </h1>
             <p className="text-warmGrey-700 font-medium">Gerencie funcionários e gestores</p>
           </div>
+          <button
+            onClick={() => router.push('/manager/users/new')}
+            className="btn-primary"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Novo Usuário
+          </button>
         </div>
 
         {error && (
@@ -205,9 +197,20 @@ export default function UsersPage() {
           </div>
         )}
 
+        {info && (
+          <div className="bg-primary-500/10 backdrop-blur-md border border-primary-500/30 text-primary-700 px-4 py-3 rounded-xl mb-6">
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+              </svg>
+              <span className="font-medium">{info}</span>
+            </div>
+          </div>
+        )}
+
         {/* Filters */}
         <div className="glass-container p-6 mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <label htmlFor="search" className="label">
                 Buscar
@@ -225,23 +228,40 @@ export default function UsersPage() {
               <label htmlFor="role" className="label">
                 Função
               </label>
-              <select
+              <CustomSelect
                 id="role"
                 value={roleFilter}
-                onChange={(e) => setRoleFilter(e.target.value)}
-                className="input"
-              >
-                <option value="">Todas as funções</option>
-                <option value="manager">Gestor</option>
-                <option value="employee">Funcionário</option>
-              </select>
+                onChange={(value) => setRoleFilter(value)}
+                options={[
+                  { value: '', label: 'Todas as funções' },
+                  { value: 'manager', label: 'Gestor' },
+                  { value: 'employee', label: 'Funcionário' }
+                ]}
+              />
+            </div>
+            <div>
+              <label htmlFor="status" className="label">
+                Status
+              </label>
+              <CustomSelect
+                id="status"
+                value={statusFilter}
+                onChange={(value) => setStatusFilter(value)}
+                options={[
+                  { value: '', label: 'Todos os status' },
+                  { value: 'active', label: 'Ativos' },
+                  { value: 'inactive', label: 'Inativos' }
+                ]}
+              />
             </div>
             <div className="flex items-end">
               <button
                 onClick={() => {
                   setSearch('');
                   setRoleFilter('');
+                  setStatusFilter('');
                   setPagination(prev => ({ ...prev, page: 1 }));
+                  router.replace('/manager/users');
                 }}
                 className="btn-secondary w-full"
               >
@@ -285,7 +305,7 @@ export default function UsersPage() {
                         {user.profilePhoto ? (
                           <img src={user.profilePhoto} alt={user.name} className="w-full h-full object-cover" />
                         ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-primary-500 to-purple-600 flex items-center justify-center text-white font-bold text-xl">
+                          <div className="w-full h-full bg-gradient-to-br from-primary-500 to-cyan-600 flex items-center justify-center text-white font-bold text-xl">
                             {user.name.charAt(0).toUpperCase()}
                           </div>
                         )}
@@ -294,8 +314,8 @@ export default function UsersPage() {
                         <div className="flex items-center gap-2 mb-1">
                           <h3 className="text-lg font-bold text-warmGrey-900">{user.name}</h3>
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            user.role === 'manager' 
-                              ? 'bg-purple-100 text-purple-700' 
+                            user.role === 'manager'
+                              ? 'bg-indigo-100 text-indigo-700'
                               : 'bg-blue-100 text-blue-700'
                           }`}>
                             {user.role === 'manager' ? 'Gestor' : 'Funcionário'}

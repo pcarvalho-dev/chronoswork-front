@@ -1,24 +1,27 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import Image from 'next/image';
-import { api, CreateUserData } from '@/app/lib/api';
+import { api, User, UpdateUserData } from '@/app/lib/api';
 import { useAuth } from '@/app/contexts/AuthContext';
-import InteractiveBackground from '@/app/components/InteractiveBackground';
 import ManagerNavbar from '@/app/components/ManagerNavbar';
+import InteractiveBackground from '@/app/components/InteractiveBackground';
 import CustomSelect from '@/app/components/CustomSelect';
 import CustomDatePicker from '@/app/components/CustomDatePicker';
 
-export default function NewUserPage() {
+export default function EditUserPage() {
   const { isManager, loading: authLoading } = useAuth();
   const router = useRouter();
+  const params = useParams();
+  const userId = parseInt(params.id as string);
+
   const [loading, setLoading] = useState(false);
+  const [userLoading, setUserLoading] = useState(true);
   const [error, setError] = useState('');
-  const [formData, setFormData] = useState<CreateUserData>({
+  const [formData, setFormData] = useState<UpdateUserData>({
     name: '',
     email: '',
-    password: '',
     role: 'employee',
     cpf: '',
     rg: '',
@@ -62,11 +65,70 @@ export default function NewUserPage() {
     }
   }, [isManager, authLoading, router]);
 
+  // Load existing user data
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        setUserLoading(true);
+        const { user } = await api.getUserById(userId);
+
+        // Set form data with existing user data
+        setFormData({
+          name: user.name || '',
+          email: user.email || '',
+          role: user.role || 'employee',
+          cpf: user.cpf || '',
+          rg: user.rg || '',
+          birthDate: user.birthDate || '',
+          gender: user.gender || '',
+          maritalStatus: user.maritalStatus || '',
+          phone: user.phone || '',
+          mobilePhone: user.mobilePhone || '',
+          address: user.address || '',
+          addressNumber: user.addressNumber || '',
+          addressComplement: user.addressComplement || '',
+          neighborhood: user.neighborhood || '',
+          city: user.city || '',
+          state: user.state || '',
+          zipCode: user.zipCode || '',
+          country: user.country || 'Brasil',
+          employeeId: user.employeeId || '',
+          department: user.department || '',
+          position: user.position || '',
+          hireDate: user.hireDate || '',
+          salary: user.salary || 0,
+          workSchedule: user.workSchedule || '',
+          employmentType: user.employmentType || '',
+          directSupervisor: user.directSupervisor || '',
+          bankName: user.bankName || '',
+          bankAccount: user.bankAccount || '',
+          bankAgency: user.bankAgency || '',
+          bankAccountType: user.bankAccountType || '',
+          pix: user.pix || '',
+          emergencyContactName: user.emergencyContactName || '',
+          emergencyContactPhone: user.emergencyContactPhone || '',
+          emergencyContactRelationship: user.emergencyContactRelationship || '',
+          education: user.education || '',
+          notes: user.notes || '',
+        });
+      } catch (err: any) {
+        setError(err.message || 'Falha ao carregar usuário');
+      } finally {
+        setUserLoading(false);
+      }
+    };
+
+    if (userId && !authLoading && isManager) {
+      loadUser();
+    }
+  }, [userId, authLoading, isManager]);
+
   // Show loading while checking auth
-  if (authLoading) {
+  if (authLoading || userLoading) {
     return (
       <div className="min-h-screen relative">
         <InteractiveBackground />
+        <ManagerNavbar />
         <div className="container-custom py-12 relative z-10">
           <div className="text-center">
             <svg className="animate-spin h-12 w-12 mx-auto text-primary-600 mb-4" viewBox="0 0 24 24">
@@ -95,21 +157,21 @@ export default function NewUserPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       setLoading(true);
       setError('');
 
       // Validate required fields
-      if (!formData.name || !formData.email || !formData.password) {
-        setError('Nome, email e senha são obrigatórios');
+      if (!formData.name || !formData.email) {
+        setError('Nome e email são obrigatórios');
         return;
       }
 
-      await api.createUser(formData);
-      router.push('/manager/users');
+      await api.updateUser(userId, formData);
+      router.push(`/manager/users/${userId}`);
     } catch (err: any) {
-      setError(err.message || 'Falha ao criar usuário');
+      setError(err.message || 'Falha ao atualizar usuário');
     } finally {
       setLoading(false);
     }
@@ -118,17 +180,26 @@ export default function NewUserPage() {
   return (
     <div className="min-h-screen relative">
       <InteractiveBackground />
-
       <ManagerNavbar />
 
       {/* Main Content */}
       <div className="container-custom py-12 relative z-10">
         <div className="max-w-4xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-5xl font-bold mb-2">
-              <span className="gradient-text">Novo Usuário</span>
-            </h1>
-            <p className="text-warmGrey-700 font-medium">Crie uma nova conta de usuário</p>
+          <div className="mb-8 flex items-center gap-4">
+            <button
+              onClick={() => router.push(`/manager/users/${userId}`)}
+              className="p-2 rounded-lg hover:bg-warmGrey-200 transition-colors"
+            >
+              <svg className="w-6 h-6 text-warmGrey-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+            </button>
+            <div>
+              <h1 className="text-5xl font-bold mb-2">
+                <span className="gradient-text">Editar Usuário</span>
+              </h1>
+              <p className="text-warmGrey-700 font-medium">Atualize as informações do usuário</p>
+            </div>
           </div>
 
           {error && (
@@ -178,34 +249,19 @@ export default function NewUserPage() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="password" className="label">
-                    Senha *
-                  </label>
-                  <input
-                    type="password"
-                    id="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleInputChange}
-                    required
-                    className="input"
-                    placeholder="Digite a senha"
-                  />
-                </div>
-                <div>
                   <label htmlFor="role" className="label">
                     Função *
                   </label>
                   <CustomSelect
                     id="role"
                     name="role"
-                    value={formData.role}
-                    onChange={(value) => setFormData(prev => ({ ...prev, role: value as any }))}
-                    required
+                    value={formData.role || 'employee'}
+                    onChange={(value) => setFormData(prev => ({ ...prev, role: value as 'employee' | 'manager' }))}
                     options={[
                       { value: 'employee', label: 'Funcionário' },
                       { value: 'manager', label: 'Gestor' }
                     ]}
+                    required
                   />
                 </div>
               </div>
@@ -252,7 +308,7 @@ export default function NewUserPage() {
                     name="birthDate"
                     value={formData.birthDate || ''}
                     onChange={(value) => setFormData(prev => ({ ...prev, birthDate: value }))}
-                    placeholder="Selecione a data..."
+                    placeholder="Selecione a data de nascimento"
                     max={new Date().toISOString().split('T')[0]}
                   />
                 </div>
@@ -263,7 +319,7 @@ export default function NewUserPage() {
                   <CustomSelect
                     id="gender"
                     name="gender"
-                    value={formData.gender}
+                    value={formData.gender || ''}
                     onChange={(value) => setFormData(prev => ({ ...prev, gender: value }))}
                     options={[
                       { value: '', label: 'Selecione' },
@@ -271,6 +327,7 @@ export default function NewUserPage() {
                       { value: 'Feminino', label: 'Feminino' },
                       { value: 'Outro', label: 'Outro' }
                     ]}
+                    placeholder="Selecione o gênero"
                   />
                 </div>
                 <div>
@@ -280,7 +337,7 @@ export default function NewUserPage() {
                   <CustomSelect
                     id="maritalStatus"
                     name="maritalStatus"
-                    value={formData.maritalStatus}
+                    value={formData.maritalStatus || ''}
                     onChange={(value) => setFormData(prev => ({ ...prev, maritalStatus: value }))}
                     options={[
                       { value: '', label: 'Selecione' },
@@ -289,6 +346,7 @@ export default function NewUserPage() {
                       { value: 'Divorciado(a)', label: 'Divorciado(a)' },
                       { value: 'Viúvo(a)', label: 'Viúvo(a)' }
                     ]}
+                    placeholder="Selecione o estado civil"
                   />
                 </div>
                 <div>
@@ -494,9 +552,9 @@ export default function NewUserPage() {
                   <CustomDatePicker
                     id="hireDate"
                     name="hireDate"
-                    value={formData.hireDate}
+                    value={formData.hireDate || ''}
                     onChange={(value) => setFormData(prev => ({ ...prev, hireDate: value }))}
-                    placeholder="Selecione a data..."
+                    placeholder="Selecione a data de contratação"
                   />
                 </div>
                 <div>
@@ -535,7 +593,7 @@ export default function NewUserPage() {
                   <CustomSelect
                     id="employmentType"
                     name="employmentType"
-                    value={formData.employmentType}
+                    value={formData.employmentType || ''}
                     onChange={(value) => setFormData(prev => ({ ...prev, employmentType: value }))}
                     options={[
                       { value: '', label: 'Selecione' },
@@ -544,6 +602,7 @@ export default function NewUserPage() {
                       { value: 'Estagiário', label: 'Estagiário' },
                       { value: 'Trainee', label: 'Trainee' }
                     ]}
+                    placeholder="Selecione o tipo de contrato"
                   />
                 </div>
                 <div>
@@ -616,7 +675,7 @@ export default function NewUserPage() {
                   <CustomSelect
                     id="bankAccountType"
                     name="bankAccountType"
-                    value={formData.bankAccountType}
+                    value={formData.bankAccountType || ''}
                     onChange={(value) => setFormData(prev => ({ ...prev, bankAccountType: value }))}
                     options={[
                       { value: '', label: 'Selecione' },
@@ -624,6 +683,7 @@ export default function NewUserPage() {
                       { value: 'Poupança', label: 'Poupança' },
                       { value: 'Salário', label: 'Salário' }
                     ]}
+                    placeholder="Selecione o tipo de conta"
                   />
                 </div>
                 <div className="md:col-span-2">
@@ -703,7 +763,7 @@ export default function NewUserPage() {
                   <CustomSelect
                     id="education"
                     name="education"
-                    value={formData.education}
+                    value={formData.education || ''}
                     onChange={(value) => setFormData(prev => ({ ...prev, education: value }))}
                     options={[
                       { value: '', label: 'Selecione' },
@@ -714,6 +774,7 @@ export default function NewUserPage() {
                       { value: 'Mestrado', label: 'Mestrado' },
                       { value: 'Doutorado', label: 'Doutorado' }
                     ]}
+                    placeholder="Selecione a escolaridade"
                   />
                 </div>
                 <div>
@@ -737,7 +798,7 @@ export default function NewUserPage() {
             <div className="flex gap-4 justify-end">
               <button
                 type="button"
-                onClick={() => router.push('/manager/users')}
+                onClick={() => router.push(`/manager/users/${userId}`)}
                 className="btn-secondary"
                 disabled={loading}
               >
@@ -754,7 +815,7 @@ export default function NewUserPage() {
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
                 ) : (
-                  'Criar Usuário'
+                  'Salvar Alterações'
                 )}
               </button>
             </div>

@@ -5,6 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '../../contexts/AuthContext';
 import InteractiveBackground from '@/app/components/InteractiveBackground';
+import CustomSelect from '@/app/components/CustomSelect';
+import CustomDatePicker from '@/app/components/CustomDatePicker';
 
 type Tab = 'basicos' | 'pessoais' | 'endereco' | 'profissionais' | 'bancarios' | 'emergencia';
 
@@ -339,7 +341,7 @@ function EmployeeRegisterContent() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`px-3 py-2 rounded-xl font-medium transition-all duration-300 flex items-center gap-2 flex-1 min-w-[90px] justify-center ${
                   activeTab === tab.id
-                    ? 'bg-gradient-to-r from-primary-500 to-purple-600 text-white shadow-lg'
+                    ? 'bg-gradient-to-r from-primary-500 to-cyan-600 text-white shadow-lg'
                     : 'bg-white/30 backdrop-blur-sm text-warmGrey-700 hover:bg-white/50'
                 }`}
               >
@@ -475,50 +477,53 @@ function EmployeeRegisterContent() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label htmlFor="birthDate" className="label">Data de Nascimento</label>
-                    <input
+                    <CustomDatePicker
                       id="birthDate"
-                      type="date"
-                      className="input"
+                      name="birthDate"
                       value={employeeData.birthDate}
-                      onChange={handleInputChange}
+                      onChange={(value) => setEmployeeData(prev => ({ ...prev, birthDate: value }))}
+                      placeholder="Selecione a data de nascimento"
                       disabled={loading}
+                      max={new Date().toISOString().split('T')[0]}
                     />
                   </div>
 
                   <div>
                     <label htmlFor="gender" className="label">Gênero</label>
-                    <select
+                    <CustomSelect
                       id="gender"
-                      className="input"
+                      name="gender"
                       value={employeeData.gender}
-                      onChange={handleInputChange}
+                      onChange={(value) => setEmployeeData(prev => ({ ...prev, gender: value as any }))}
+                      options={[
+                        { value: '', label: 'Selecione...' },
+                        { value: 'Masculino', label: 'Masculino' },
+                        { value: 'Feminino', label: 'Feminino' },
+                        { value: 'Outro', label: 'Outro' },
+                        { value: 'Prefiro não informar', label: 'Prefiro não informar' }
+                      ]}
                       disabled={loading}
-                    >
-                      <option value="">Selecione...</option>
-                      <option value="Masculino">Masculino</option>
-                      <option value="Feminino">Feminino</option>
-                      <option value="Outro">Outro</option>
-                      <option value="Prefiro não informar">Prefiro não informar</option>
-                    </select>
+                    />
                   </div>
                 </div>
 
                 <div>
                   <label htmlFor="maritalStatus" className="label">Estado Civil</label>
-                  <select
+                  <CustomSelect
                     id="maritalStatus"
-                    className="input"
+                    name="maritalStatus"
                     value={employeeData.maritalStatus}
-                    onChange={handleInputChange}
+                    onChange={(value) => setEmployeeData(prev => ({ ...prev, maritalStatus: value as any }))}
+                    options={[
+                      { value: '', label: 'Selecione...' },
+                      { value: 'Solteiro(a)', label: 'Solteiro(a)' },
+                      { value: 'Casado(a)', label: 'Casado(a)' },
+                      { value: 'Divorciado(a)', label: 'Divorciado(a)' },
+                      { value: 'Viúvo(a)', label: 'Viúvo(a)' },
+                      { value: 'União Estável', label: 'União Estável' }
+                    ]}
                     disabled={loading}
-                  >
-                    <option value="">Selecione...</option>
-                    <option value="Solteiro(a)">Solteiro(a)</option>
-                    <option value="Casado(a)">Casado(a)</option>
-                    <option value="Divorciado(a)">Divorciado(a)</option>
-                    <option value="Viúvo(a)">Viúvo(a)</option>
-                    <option value="União Estável">União Estável</option>
-                  </select>
+                  />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -553,21 +558,22 @@ function EmployeeRegisterContent() {
 
                 <div>
                   <label htmlFor="education" className="label">Escolaridade</label>
-                  <select
+                  <CustomSelect
                     id="education"
-                    className="input"
+                    name="education"
                     value={employeeData.education}
-                    onChange={handleInputChange}
+                    onChange={(value) => setEmployeeData(prev => ({ ...prev, education: value as any }))}
+                    options={[
+                      { value: '', label: 'Selecione...' },
+                      { value: 'Fundamental', label: 'Fundamental' },
+                      { value: 'Médio', label: 'Médio' },
+                      { value: 'Superior', label: 'Superior' },
+                      { value: 'Pós-graduação', label: 'Pós-graduação' },
+                      { value: 'Mestrado', label: 'Mestrado' },
+                      { value: 'Doutorado', label: 'Doutorado' }
+                    ]}
                     disabled={loading}
-                  >
-                    <option value="">Selecione...</option>
-                    <option value="Fundamental">Fundamental</option>
-                    <option value="Médio">Médio</option>
-                    <option value="Superior">Superior</option>
-                    <option value="Pós-graduação">Pós-graduação</option>
-                    <option value="Mestrado">Mestrado</option>
-                    <option value="Doutorado">Doutorado</option>
-                  </select>
+                  />
                 </div>
               </div>
             )}
@@ -736,12 +742,12 @@ function EmployeeRegisterContent() {
 
                   <div>
                     <label htmlFor="hireDate" className="label">Data de Admissão</label>
-                    <input
+                    <CustomDatePicker
                       id="hireDate"
-                      type="date"
-                      className="input"
+                      name="hireDate"
                       value={employeeData.hireDate}
-                      onChange={handleInputChange}
+                      onChange={(value) => setEmployeeData(prev => ({ ...prev, hireDate: value }))}
+                      placeholder="Selecione a data de admissão"
                       disabled={loading}
                     />
                   </div>
@@ -780,21 +786,22 @@ function EmployeeRegisterContent() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label htmlFor="employmentType" className="label">Tipo de Contrato</label>
-                    <select
+                    <CustomSelect
                       id="employmentType"
-                      className="input"
+                      name="employmentType"
                       value={employeeData.employmentType}
-                      onChange={handleInputChange}
+                      onChange={(value) => setEmployeeData(prev => ({ ...prev, employmentType: value as any }))}
+                      options={[
+                        { value: '', label: 'Selecione...' },
+                        { value: 'CLT', label: 'CLT' },
+                        { value: 'PJ', label: 'PJ' },
+                        { value: 'Estagiário', label: 'Estagiário' },
+                        { value: 'Freelancer', label: 'Freelancer' },
+                        { value: 'Temporário', label: 'Temporário' },
+                        { value: 'Autônomo', label: 'Autônomo' }
+                      ]}
                       disabled={loading}
-                    >
-                      <option value="">Selecione...</option>
-                      <option value="CLT">CLT</option>
-                      <option value="PJ">PJ</option>
-                      <option value="Estagiário">Estagiário</option>
-                      <option value="Freelancer">Freelancer</option>
-                      <option value="Temporário">Temporário</option>
-                      <option value="Autônomo">Autônomo</option>
-                    </select>
+                    />
                   </div>
 
                   <div>
@@ -860,18 +867,19 @@ function EmployeeRegisterContent() {
 
                   <div>
                     <label htmlFor="bankAccountType" className="label">Tipo de Conta</label>
-                    <select
+                    <CustomSelect
                       id="bankAccountType"
-                      className="input"
+                      name="bankAccountType"
                       value={employeeData.bankAccountType}
-                      onChange={handleInputChange}
+                      onChange={(value) => setEmployeeData(prev => ({ ...prev, bankAccountType: value as any }))}
+                      options={[
+                        { value: '', label: 'Selecione...' },
+                        { value: 'Corrente', label: 'Corrente' },
+                        { value: 'Poupança', label: 'Poupança' },
+                        { value: 'Salário', label: 'Salário' }
+                      ]}
                       disabled={loading}
-                    >
-                      <option value="">Selecione...</option>
-                      <option value="Corrente">Corrente</option>
-                      <option value="Poupança">Poupança</option>
-                      <option value="Salário">Salário</option>
-                    </select>
+                    />
                   </div>
                 </div>
 

@@ -4,9 +4,10 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { api, Company, UpdateCompanyData } from '@/app/lib/api';
 import ManagerNavbar from '@/app/components/ManagerNavbar';
+import InteractiveBackground from '@/app/components/InteractiveBackground';
 
 export default function CompanyManagementPage() {
-  const { user, isManager } = useAuth();
+  const { user, isManager, loading: authLoading } = useAuth();
   const [company, setCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -102,15 +103,8 @@ export default function CompanyManagementPage() {
     setIsEditing(false);
   };
 
-  if (!isManager) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-warmGrey-50 to-warmGrey-100 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-warmGrey-900 mb-4">Acesso Negado</h1>
-          <p className="text-warmGrey-700">Você não tem permissão para acessar esta página.</p>
-        </div>
-      </div>
-    );
+  if (authLoading || !isManager) {
+    return null;
   }
 
   if (loading && !company) {
@@ -125,10 +119,11 @@ export default function CompanyManagementPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-warmGrey-50 to-warmGrey-100">
+    <div className="min-h-screen relative">
+      <InteractiveBackground />
       <ManagerNavbar />
-      
-      <div className="container-custom py-8">
+
+      <div className="container-custom py-8 relative z-10">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="flex items-center justify-between mb-8">

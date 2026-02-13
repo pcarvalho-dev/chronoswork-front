@@ -6,6 +6,8 @@ import Image from 'next/image';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { UpdateProfileData } from '@/app/lib/api';
 import InteractiveBackground from '@/app/components/InteractiveBackground';
+import CustomSelect from '@/app/components/CustomSelect';
+import CustomDatePicker from '@/app/components/CustomDatePicker';
 
 type TabType = 'personal' | 'contact' | 'address' | 'professional' | 'banking' | 'emergency';
 
@@ -254,7 +256,7 @@ export default function ProfilePage() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`px-4 py-3 rounded-xl font-medium transition-all flex items-center gap-2 ${
                     activeTab === tab.id
-                      ? 'bg-gradient-to-r from-primary-500 to-purple-600 text-white shadow-lg'
+                      ? 'bg-gradient-to-r from-primary-500 to-cyan-600 text-white shadow-lg'
                       : 'bg-white/30 text-warmGrey-700 hover:bg-white/50'
                   }`}
                 >
@@ -271,7 +273,7 @@ export default function ProfilePage() {
             {activeTab === 'personal' && (
               <div className="glass-container p-8">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-purple-600 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-cyan-600 flex items-center justify-center">
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
@@ -333,65 +335,65 @@ export default function ProfilePage() {
                   </div>
                   <div>
                     <label htmlFor="birthDate" className="label">Data de Nascimento</label>
-                    <input
-                      type="date"
+                    <CustomDatePicker
                       id="birthDate"
                       name="birthDate"
                       value={formData.birthDate || ''}
-                      onChange={handleChange}
-                      className="input"
+                      onChange={(value) => setFormData(prev => ({ ...prev, birthDate: value }))}
+                      placeholder="Selecione a data..."
+                      max={new Date().toISOString().split('T')[0]}
                     />
                   </div>
                   <div>
                     <label htmlFor="gender" className="label">Gênero</label>
-                    <select
+                    <CustomSelect
                       id="gender"
                       name="gender"
                       value={formData.gender || ''}
-                      onChange={handleChange}
-                      className="input"
-                    >
-                      <option value="">Selecione</option>
-                      <option value="Masculino">Masculino</option>
-                      <option value="Feminino">Feminino</option>
-                      <option value="Outro">Outro</option>
-                      <option value="Prefiro não informar">Prefiro não informar</option>
-                    </select>
+                      onChange={(value) => setFormData(prev => ({ ...prev, gender: value as any }))}
+                      options={[
+                        { value: '', label: 'Selecione' },
+                        { value: 'Masculino', label: 'Masculino' },
+                        { value: 'Feminino', label: 'Feminino' },
+                        { value: 'Outro', label: 'Outro' },
+                        { value: 'Prefiro não informar', label: 'Prefiro não informar' }
+                      ]}
+                    />
                   </div>
                   <div>
                     <label htmlFor="maritalStatus" className="label">Estado Civil</label>
-                    <select
+                    <CustomSelect
                       id="maritalStatus"
                       name="maritalStatus"
                       value={formData.maritalStatus || ''}
-                      onChange={handleChange}
-                      className="input"
-                    >
-                      <option value="">Selecione</option>
-                      <option value="Solteiro(a)">Solteiro(a)</option>
-                      <option value="Casado(a)">Casado(a)</option>
-                      <option value="Divorciado(a)">Divorciado(a)</option>
-                      <option value="Viúvo(a)">Viúvo(a)</option>
-                      <option value="União Estável">União Estável</option>
-                    </select>
+                      onChange={(value) => setFormData(prev => ({ ...prev, maritalStatus: value as any }))}
+                      options={[
+                        { value: '', label: 'Selecione' },
+                        { value: 'Solteiro(a)', label: 'Solteiro(a)' },
+                        { value: 'Casado(a)', label: 'Casado(a)' },
+                        { value: 'Divorciado(a)', label: 'Divorciado(a)' },
+                        { value: 'Viúvo(a)', label: 'Viúvo(a)' },
+                        { value: 'União Estável', label: 'União Estável' }
+                      ]}
+                    />
                   </div>
                   <div>
                     <label htmlFor="education" className="label">Escolaridade</label>
-                    <select
+                    <CustomSelect
                       id="education"
                       name="education"
                       value={formData.education || ''}
-                      onChange={handleChange}
-                      className="input"
-                    >
-                      <option value="">Selecione</option>
-                      <option value="Fundamental">Fundamental</option>
-                      <option value="Médio">Médio</option>
-                      <option value="Superior">Superior</option>
-                      <option value="Pós-graduação">Pós-graduação</option>
-                      <option value="Mestrado">Mestrado</option>
-                      <option value="Doutorado">Doutorado</option>
-                    </select>
+                      onChange={(value) => setFormData(prev => ({ ...prev, education: value as any }))}
+                      options={[
+                        { value: '', label: 'Selecione' },
+                        { value: 'Fundamental', label: 'Fundamental' },
+                        { value: 'Médio', label: 'Médio' },
+                        { value: 'Superior', label: 'Superior' },
+                        { value: 'Pós-graduação', label: 'Pós-graduação' },
+                        { value: 'Mestrado', label: 'Mestrado' },
+                        { value: 'Doutorado', label: 'Doutorado' }
+                      ]}
+                    />
                   </div>
                 </div>
               </div>
@@ -602,13 +604,12 @@ export default function ProfilePage() {
                   </div>
                   <div>
                     <label htmlFor="hireDate" className="label">Data de Contratação</label>
-                    <input
-                      type="date"
+                    <CustomDatePicker
                       id="hireDate"
                       name="hireDate"
                       value={formData.hireDate || ''}
-                      onChange={handleChange}
-                      className="input"
+                      onChange={(value) => setFormData(prev => ({ ...prev, hireDate: value }))}
+                      placeholder="Selecione a data..."
                     />
                   </div>
                   <div>
@@ -626,21 +627,21 @@ export default function ProfilePage() {
                   </div>
                   <div>
                     <label htmlFor="employmentType" className="label">Tipo de Contrato</label>
-                    <select
+                    <CustomSelect
                       id="employmentType"
                       name="employmentType"
                       value={formData.employmentType || ''}
-                      onChange={handleChange}
-                      className="input"
-                    >
-                      <option value="">Selecione</option>
-                      <option value="CLT">CLT</option>
-                      <option value="PJ">PJ</option>
-                      <option value="Estagiário">Estagiário</option>
-                      <option value="Freelancer">Freelancer</option>
-                      <option value="Temporário">Temporário</option>
-                      <option value="Autônomo">Autônomo</option>
-                    </select>
+                      onChange={(value) => setFormData(prev => ({ ...prev, employmentType: value as any }))}
+                      options={[
+                        { value: '', label: 'Selecione' },
+                        { value: 'CLT', label: 'CLT' },
+                        { value: 'PJ', label: 'PJ' },
+                        { value: 'Estagiário', label: 'Estagiário' },
+                        { value: 'Freelancer', label: 'Freelancer' },
+                        { value: 'Temporário', label: 'Temporário' },
+                        { value: 'Autônomo', label: 'Autônomo' }
+                      ]}
+                    />
                   </div>
                   <div>
                     <label htmlFor="directSupervisor" className="label">Supervisor Direto</label>
@@ -684,7 +685,7 @@ export default function ProfilePage() {
             {activeTab === 'banking' && (
               <div className="glass-container p-8">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-sky-600 flex items-center justify-center">
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
@@ -730,18 +731,18 @@ export default function ProfilePage() {
                   </div>
                   <div>
                     <label htmlFor="bankAccountType" className="label">Tipo de Conta</label>
-                    <select
+                    <CustomSelect
                       id="bankAccountType"
                       name="bankAccountType"
                       value={formData.bankAccountType || ''}
-                      onChange={handleChange}
-                      className="input"
-                    >
-                      <option value="">Selecione</option>
-                      <option value="Corrente">Corrente</option>
-                      <option value="Poupança">Poupança</option>
-                      <option value="Salário">Salário</option>
-                    </select>
+                      onChange={(value) => setFormData(prev => ({ ...prev, bankAccountType: value as any }))}
+                      options={[
+                        { value: '', label: 'Selecione' },
+                        { value: 'Corrente', label: 'Corrente' },
+                        { value: 'Poupança', label: 'Poupança' },
+                        { value: 'Salário', label: 'Salário' }
+                      ]}
+                    />
                   </div>
                   <div className="md:col-span-2">
                     <label htmlFor="pix" className="label">Chave PIX</label>

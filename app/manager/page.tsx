@@ -9,7 +9,7 @@ import InteractiveBackground from '@/app/components/InteractiveBackground';
 import ManagerNavbar from '../components/ManagerNavbar';
 
 export default function ManagerDashboard() {
-  const { user, isManager, logout } = useAuth();
+  const { user, isManager, logout, loading: authLoading } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -24,10 +24,10 @@ export default function ManagerDashboard() {
 
   // Redirect if not manager
   useEffect(() => {
-    if (!isManager) {
+    if (!authLoading && !isManager) {
       router.push('/login');
     }
-  }, [isManager, router]);
+  }, [authLoading, isManager, router]);
 
   useEffect(() => {
     if (isManager) {
@@ -40,8 +40,7 @@ export default function ManagerDashboard() {
       setLoading(true);
       setError('');
 
-      // Initialize with default values
-      let stats = {
+      let dashboardStats = {
         totalUsers: 0,
         activeUsers: 0,
         pendingApprovals: 0,
@@ -50,67 +49,45 @@ export default function ManagerDashboard() {
 
       let recentTimeLogs: any[] = [];
 
-      // Try to fetch company data (this should work for managers)
+      // Fetch all users to get total and active counts
       try {
-        const companyData = await api.getCompany();
-        if (companyData && companyData.company) {
-          // If we have company data, we can show some basic info
-          stats.totalUsers = 1; // At least the manager
-          console.log('Company data loaded successfully');
+        const usersData = await api.getUsers(1, 1000);
+        if (usersData && usersData.users) {
+          dashboardStats.totalUsers = usersData.pagination?.total || usersData.users.length;
+          dashboardStats.activeUsers = usersData.users.filter(u => u.isActive).length;
         }
-      } catch (companyErr: any) {
-        console.warn('Failed to fetch company data:', companyErr);
-        // If company not found, it might mean the manager hasn't set up their company yet
-        if (companyErr.message?.includes('Empresa não encontrada')) {
-          console.log('Company not set up yet - this is normal for new managers');
-        }
+      } catch (usersErr) {
+        console.warn('Failed to fetch users:', usersErr);
       }
 
-      // Try to fetch invitations (this should work for managers)
+      // Fetch pending employees (awaiting approval)
       try {
-        const invitationsData = await api.getInvitations(1, 10);
-        if (invitationsData && invitationsData.invitations) {
-          stats.pendingApprovals = invitationsData.invitations.filter(inv => 
-            !inv.isUsed && inv.isActive
-          ).length;
-          console.log('Invitations data loaded successfully');
+        const pendingData = await api.getPendingEmployees(1, 1000);
+        if (pendingData && pendingData.users) {
+          dashboardStats.pendingApprovals = pendingData.pagination?.total || pendingData.users.length;
         }
-      } catch (invitationsErr: any) {
-        console.warn('Failed to fetch invitations:', invitationsErr);
-        if (invitationsErr.message?.includes('não encontrado') || invitationsErr.message?.includes('not found')) {
-          console.log('Invitations endpoint not available yet');
-        }
-      }
-
-      // Try to fetch pending employees (this should work for managers)
-      try {
-        const pendingEmployeesData = await api.getPendingEmployees(1, 10);
-        if (pendingEmployeesData && pendingEmployeesData.users) {
-          stats.pendingApprovals = pendingEmployeesData.users.length + stats.pendingApprovals;
-          console.log('Pending employees data loaded successfully');
-        }
-      } catch (pendingErr: any) {
+      } catch (pendingErr) {
         console.warn('Failed to fetch pending employees:', pendingErr);
-        if (pendingErr.message?.includes('não encontrado') || pendingErr.message?.includes('not found')) {
-          console.log('Pending employees endpoint not available yet');
-        }
       }
 
-      setStats(stats);
-      setRecentTimeLogs(recentTimeLogs);
-      
-      // Check if we need to show a setup message
-      if (stats.totalUsers === 0 && stats.pendingApprovals === 0) {
-        setError('Configure sua empresa para começar a gerenciar funcionários. Acesse a página de configurações da empresa.');
+      // Fetch today's time log report for total hours
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const reportData = await api.getTimeLogReport(today, today);
+        if (reportData && reportData.statistics) {
+          dashboardStats.totalHoursToday = Math.round(reportData.statistics.totalHoursWorked * 10) / 10;
+        }
+      } catch (reportErr) {
+        console.warn('Failed to fetch time log report:', reportErr);
       }
-      
-      console.log('Dashboard loaded successfully');
-      
+
+      setStats(dashboardStats);
+      setRecentTimeLogs(recentTimeLogs);
+
     } catch (err: any) {
       console.error('Dashboard error:', err);
-      setError('Falha ao carregar dados do dashboard. Alguns dados podem não estar disponíveis.');
-      
-      // Set default stats if everything fails
+      setError('Falha ao carregar dados do dashboard.');
+
       setStats({
         totalUsers: 0,
         activeUsers: 0,
@@ -151,8 +128,8 @@ export default function ManagerDashboard() {
     return `${hours}h ${minutes}m`;
   };
 
-  if (!isManager) {
-    return null; // Will redirect
+  if (authLoading || !isManager) {
+    return null;
   }
 
   return (
@@ -206,7 +183,7 @@ export default function ManagerDashboard() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="glass-container p-6">
+          <button onClick={() => router.push('/manager/users')} className="glass-container p-6 text-left cursor-pointer hover:scale-[1.02] transition-transform">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -221,9 +198,9 @@ export default function ManagerDashboard() {
             <div className="text-3xl font-bold gradient-text">
               {loading ? '...' : stats.totalUsers}
             </div>
-          </div>
+          </button>
 
-          <div className="glass-container p-6">
+          <button onClick={() => router.push('/manager/users?status=active')} className="glass-container p-6 text-left cursor-pointer hover:scale-[1.02] transition-transform">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -238,9 +215,9 @@ export default function ManagerDashboard() {
             <div className="text-3xl font-bold gradient-text">
               {loading ? '...' : stats.activeUsers}
             </div>
-          </div>
+          </button>
 
-          <div className="glass-container p-6">
+          <button onClick={() => router.push('/manager/employees/approval')} className="glass-container p-6 text-left cursor-pointer hover:scale-[1.02] transition-transform">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -255,11 +232,11 @@ export default function ManagerDashboard() {
             <div className="text-3xl font-bold gradient-text">
               {loading ? '...' : stats.pendingApprovals}
             </div>
-          </div>
+          </button>
 
-          <div className="glass-container p-6">
+          <button onClick={() => router.push('/manager/time-logs')} className="glass-container p-6 text-left cursor-pointer hover:scale-[1.02] transition-transform">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-sky-600 flex items-center justify-center">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                 </svg>
@@ -272,14 +249,14 @@ export default function ManagerDashboard() {
             <div className="text-3xl font-bold gradient-text">
               {loading ? '...' : `${stats.totalHoursToday}h`}
             </div>
-          </div>
+          </button>
         </div>
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           <div className="glass-container p-8">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-purple-600 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-cyan-600 flex items-center justify-center">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
                 </svg>
@@ -349,7 +326,7 @@ export default function ManagerDashboard() {
         {/* Recent Activity */}
         <div className="glass-container p-8">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-sky-600 flex items-center justify-center">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>

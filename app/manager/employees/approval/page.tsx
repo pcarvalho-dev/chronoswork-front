@@ -4,9 +4,11 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { api, User } from '@/app/lib/api';
 import ManagerNavbar from '@/app/components/ManagerNavbar';
+import InteractiveBackground from '@/app/components/InteractiveBackground';
+import CustomSelect from '@/app/components/CustomSelect';
 
 export default function EmployeeApprovalPage() {
-  const { user, isManager } = useAuth();
+  const { user, isManager, loading: authLoading } = useAuth();
   const [employees, setEmployees] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -115,22 +117,16 @@ export default function EmployeeApprovalPage() {
     });
   };
 
-  if (!isManager) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-warmGrey-50 to-warmGrey-100 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-warmGrey-900 mb-4">Acesso Negado</h1>
-          <p className="text-warmGrey-700">Você não tem permissão para acessar esta página.</p>
-        </div>
-      </div>
-    );
+  if (authLoading || !isManager) {
+    return null;
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-warmGrey-50 to-warmGrey-100">
+    <div className="min-h-screen relative">
+      <InteractiveBackground />
       <ManagerNavbar />
-      
-      <div className="container-custom py-8">
+
+      <div className="container-custom py-8 relative z-10">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="mb-8">
@@ -182,17 +178,18 @@ export default function EmployeeApprovalPage() {
                   </button>
                 </div>
               </form>
-              
-              <select
+
+              <CustomSelect
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as any)}
-                className="input w-48"
-              >
-                <option value="all">Todos</option>
-                <option value="pending">Pendentes</option>
-                <option value="approved">Aprovados</option>
-                <option value="rejected">Rejeitados</option>
-              </select>
+                onChange={(value) => setStatusFilter(value as any)}
+                className="w-48"
+                options={[
+                  { value: 'all', label: 'Todos' },
+                  { value: 'pending', label: 'Pendentes' },
+                  { value: 'approved', label: 'Aprovados' },
+                  { value: 'rejected', label: 'Rejeitados' }
+                ]}
+              />
             </div>
           </div>
 

@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { api, TimeLogsResponse } from '@/app/lib/api';
 import { useAuth } from '@/app/contexts/AuthContext';
 import InteractiveBackground from '@/app/components/InteractiveBackground';
+import ManagerNavbar from '@/app/components/ManagerNavbar';
 
 export default function PendingTimeLogsPage() {
-  const { isManager } = useAuth();
+  const { isManager, loading: authLoading } = useAuth();
   const router = useRouter();
   const [timeLogs, setTimeLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,10 +28,10 @@ export default function PendingTimeLogsPage() {
 
   // Redirect if not manager
   useEffect(() => {
-    if (!isManager) {
+    if (!authLoading && !isManager) {
       router.push('/login');
     }
-  }, [isManager, router]);
+  }, [authLoading, isManager, router]);
 
   useEffect(() => {
     if (isManager) {
@@ -93,60 +93,25 @@ export default function PendingTimeLogsPage() {
     return `${hours}h ${minutes}m`;
   };
 
-  if (!isManager) {
-    return null; // Will redirect
+  if (authLoading || !isManager) {
+    return null;
   }
 
   return (
     <div className="min-h-screen relative">
       <InteractiveBackground />
 
-      {/* Header */}
-      <nav className="bg-white/70 backdrop-blur-lg border-b border-white/30 sticky top-0 z-50">
-        <div className="container-custom">
-          <div className="flex items-center justify-between h-navbar">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => router.push('/manager/time-logs')}
-                className="p-2 rounded-lg hover:bg-white/50 transition-colors"
-              >
-                <svg className="w-6 h-6 text-warmGrey-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-              </button>
-              <div className="flex items-center gap-2">
-                <Image
-                  src="/logo.png"
-                  alt="Chronos.work"
-                  width={1200}
-                  height={320}
-                  className="h-60 w-auto drop-shadow-lg"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => router.push('/manager/time-logs/manual')}
-                className="btn-primary"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Lançar Ponto
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <ManagerNavbar />
 
       {/* Main Content */}
       <div className="container-custom py-12 relative z-10">
-        <div className="mb-8">
-          <h1 className="text-5xl font-bold mb-2">
-            <span className="gradient-text">Aprovação de Pontos</span>
-          </h1>
-          <p className="text-warmGrey-700 font-medium">Aprove ou rejeite lançamentos manuais pendentes</p>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-5xl font-bold mb-2">
+              <span className="gradient-text">Aprovação de Pontos</span>
+            </h1>
+            <p className="text-warmGrey-700 font-medium">Aprove ou rejeite lançamentos manuais pendentes</p>
+          </div>
         </div>
 
         {error && (

@@ -2,18 +2,21 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { api, TimeLogReportResponse, User } from '@/app/lib/api';
 import { useAuth } from '@/app/contexts/AuthContext';
 import InteractiveBackground from '@/app/components/InteractiveBackground';
+import ManagerNavbar from '@/app/components/ManagerNavbar';
+import CustomSelect from '@/app/components/CustomSelect';
+import CustomDatePicker from '@/app/components/CustomDatePicker';
 
 export default function TimeLogsPage() {
-  const { isManager } = useAuth();
+  const { isManager, loading: authLoading } = useAuth();
   const router = useRouter();
   const [timeLogs, setTimeLogs] = useState<any[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [info, setInfo] = useState('');
   const [statistics, setStatistics] = useState({
     totalApproved: 0,
     totalPending: 0,
@@ -30,10 +33,10 @@ export default function TimeLogsPage() {
 
   // Redirect if not manager
   useEffect(() => {
-    if (!isManager) {
+    if (!authLoading && !isManager) {
       router.push('/login');
     }
-  }, [isManager, router]);
+  }, [authLoading, isManager, router]);
 
   useEffect(() => {
     if (isManager) {
@@ -74,6 +77,7 @@ export default function TimeLogsPage() {
     try {
       setLoading(true);
       setError('');
+      setInfo('');
 
       // Try to fetch time logs, but don't fail if endpoint doesn't exist
       let timeLogsData: any[] = [];
@@ -130,7 +134,7 @@ export default function TimeLogsPage() {
       setStatistics(statisticsData);
       
       if (timeLogsData.length === 0) {
-        setError('Nenhum registro de ponto encontrado. Verifique os filtros ou se há registros no período selecionado.');
+        setInfo('Nenhum registro de ponto encontrado. Verifique os filtros ou se há registros no período selecionado.');
       }
     } catch (err: any) {
       console.error('Error fetching time logs:', err);
@@ -216,60 +220,34 @@ export default function TimeLogsPage() {
     }
   };
 
-  if (!isManager) {
-    return null; // Will redirect
+  if (authLoading || !isManager) {
+    return null;
   }
 
   return (
     <div className="min-h-screen relative">
       <InteractiveBackground />
 
-      {/* Header */}
-      <nav className="bg-white/70 backdrop-blur-lg border-b border-white/30 sticky top-0 z-50">
-        <div className="container-custom">
-          <div className="flex items-center justify-between h-navbar">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => router.push('/manager')}
-                className="p-2 rounded-lg hover:bg-white/50 transition-colors"
-              >
-                <svg className="w-6 h-6 text-warmGrey-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-              </button>
-              <div className="flex items-center gap-2">
-                <Image
-                  src="/logo.png"
-                  alt="Chronos.work"
-                  width={1200}
-                  height={320}
-                  className="h-60 w-auto drop-shadow-lg"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => router.push('/manager/time-logs/manual')}
-                className="btn-primary"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Lançar Ponto
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <ManagerNavbar />
 
       {/* Main Content */}
       <div className="container-custom py-12 relative z-10">
-        <div className="mb-8">
-          <h1 className="text-5xl font-bold mb-2">
-            <span className="gradient-text">Relatórios de Pontos</span>
-          </h1>
-          <p className="text-warmGrey-700 font-medium">Gerencie e analise os registros de ponto da equipe</p>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-5xl font-bold mb-2">
+              <span className="gradient-text">Relatórios de Pontos</span>
+            </h1>
+            <p className="text-warmGrey-700 font-medium">Gerencie e analise os registros de ponto da equipe</p>
+          </div>
+          <button
+            onClick={() => router.push('/manager/time-logs/manual')}
+            className="btn-primary"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Lançar Ponto
+          </button>
         </div>
 
         {error && (
@@ -279,6 +257,17 @@ export default function TimeLogsPage() {
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
               </svg>
               <span className="font-medium">{error}</span>
+            </div>
+          </div>
+        )}
+
+        {info && (
+          <div className="bg-primary-500/10 backdrop-blur-md border border-primary-500/30 text-primary-700 px-4 py-3 rounded-xl mb-6">
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+              </svg>
+              <span className="font-medium">{info}</span>
             </div>
           </div>
         )}
@@ -321,7 +310,7 @@ export default function TimeLogsPage() {
 
           <div className="glass-container p-6">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-pink-600 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-sky-600 flex items-center justify-center">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -355,7 +344,7 @@ export default function TimeLogsPage() {
 
           <div className="glass-container p-6">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-sky-600 flex items-center justify-center">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
@@ -379,46 +368,43 @@ export default function TimeLogsPage() {
               <label htmlFor="startDate" className="label">
                 Data Inicial
               </label>
-              <input
-                type="date"
+              <CustomDatePicker
                 id="startDate"
                 name="startDate"
                 value={filters.startDate}
-                onChange={handleFilterChange}
-                className="input"
+                onChange={(value) => setFilters(prev => ({ ...prev, startDate: value }))}
+                placeholder="Selecione a data..."
               />
             </div>
             <div>
               <label htmlFor="endDate" className="label">
                 Data Final
               </label>
-              <input
-                type="date"
+              <CustomDatePicker
                 id="endDate"
                 name="endDate"
                 value={filters.endDate}
-                onChange={handleFilterChange}
-                className="input"
+                onChange={(value) => setFilters(prev => ({ ...prev, endDate: value }))}
+                placeholder="Selecione a data..."
               />
             </div>
             <div>
               <label htmlFor="userId" className="label">
                 Funcionário
               </label>
-              <select
+              <CustomSelect
                 id="userId"
                 name="userId"
                 value={filters.userId}
-                onChange={handleFilterChange}
-                className="input"
-              >
-                <option value="">Todos os funcionários</option>
-                {users.map(user => (
-                  <option key={user.id} value={user.id}>
-                    {user.name}
-                  </option>
-                ))}
-              </select>
+                onChange={(value) => setFilters(prev => ({ ...prev, userId: value }))}
+                options={[
+                  { value: '', label: 'Todos os funcionários' },
+                  ...users.map(user => ({
+                    value: String(user.id),
+                    label: user.name
+                  }))
+                ]}
+              />
             </div>
             <div>
               <label htmlFor="department" className="label">

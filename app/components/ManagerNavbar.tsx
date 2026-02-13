@@ -22,25 +22,18 @@ export default function ManagerNavbar() {
     <nav className="bg-white/70 backdrop-blur-lg border-b border-white/30 sticky top-0 z-50">
       <div className="container-custom">
         <div className="flex items-center justify-between h-navbar">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => router.push('/manager')}
-              className="p-2 rounded-lg hover:bg-white/50 transition-colors"
-            >
-              <svg className="w-6 h-6 text-warmGrey-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-              </svg>
-            </button>
-            <div className="flex items-center gap-2">
-              <Image
-                src="/logo.png"
-                alt="Chronos.work"
-                width={1200}
-                height={320}
-                className="h-60 w-auto drop-shadow-lg"
-              />
-            </div>
-          </div>
+          <button
+            onClick={() => router.push('/manager')}
+            className="flex items-center gap-2 cursor-pointer -ml-14"
+          >
+            <Image
+              src="/logo.png"
+              alt="Chronos.work"
+              width={1200}
+              height={320}
+              className="h-60 w-auto drop-shadow-lg"
+            />
+          </button>
 
           {/* Navigation Links */}
           <div className="hidden md:flex items-center gap-6">
@@ -123,7 +116,7 @@ export default function ManagerNavbar() {
                 {user?.profilePhoto ? (
                   <img src={user.profilePhoto} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-primary-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
+                  <div className="w-full h-full bg-gradient-to-br from-primary-500 to-cyan-600 flex items-center justify-center text-white font-bold text-lg">
                     <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
                     </svg>
@@ -133,7 +126,7 @@ export default function ManagerNavbar() {
 
               {/* Profile Menu Dropdown */}
               {showProfileMenu && (
-                <div className="absolute right-0 mt-2 w-64 glass-container p-4 shadow-xl">
+                <div className="absolute right-0 mt-2 w-64 dropdown-menu p-4">
                   <div className="space-y-3">
                     <div className="text-center pb-3 border-b border-warmGrey-200">
                       <p className="font-semibold text-warmGrey-900">{user?.name}</p>

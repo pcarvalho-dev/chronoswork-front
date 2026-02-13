@@ -578,7 +578,7 @@ export default function DashboardPage() {
                   {user?.profilePhoto ? (
                     <img src={getPhotoUrl(user.profilePhoto) || ''} alt="Profile" className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-primary-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
+                    <div className="w-full h-full bg-gradient-to-br from-primary-500 to-cyan-600 flex items-center justify-center text-white font-bold text-lg">
                       <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
                       </svg>
@@ -588,7 +588,7 @@ export default function DashboardPage() {
 
                 {/* Profile Menu Dropdown */}
                 {showProfileMenu && (
-                  <div className="absolute right-0 mt-2 w-64 glass-container p-4 shadow-xl">
+                  <div className="absolute right-0 mt-2 w-64 dropdown-menu p-4">
                     <div className="space-y-3">
                       {/* Hidden file input */}
                       <input
@@ -732,7 +732,7 @@ export default function DashboardPage() {
           {/* Check In/Out Card */}
           <div className="lg:col-span-2 glass-container p-8">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-purple-600 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-cyan-600 flex items-center justify-center">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -791,7 +791,7 @@ export default function DashboardPage() {
                 </button>
 
                 {/* Inspirational Quote */}
-                <div className="bg-gradient-to-br from-primary-50/50 to-purple-50/50 backdrop-blur-sm border border-primary-200/30 rounded-xl p-6">
+                <div className="bg-gradient-to-br from-primary-50/50 to-cyan-50/50 backdrop-blur-sm border border-primary-200/30 rounded-xl p-6">
                   <div className="flex items-start gap-3 mb-4">
                     <svg className="w-8 h-8 text-primary-400 flex-shrink-0 mt-1" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
@@ -881,7 +881,7 @@ export default function DashboardPage() {
                 </button>
 
                 {/* Inspirational Quote */}
-                <div className="bg-gradient-to-br from-primary-50/50 to-purple-50/50 backdrop-blur-sm border border-primary-200/30 rounded-xl p-6">
+                <div className="bg-gradient-to-br from-primary-50/50 to-cyan-50/50 backdrop-blur-sm border border-primary-200/30 rounded-xl p-6">
                   <div className="flex items-start gap-3 mb-4">
                     <svg className="w-8 h-8 text-primary-400 flex-shrink-0 mt-1" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
@@ -1004,7 +1004,7 @@ export default function DashboardPage() {
         {/* Time Logs */}
         <div className="glass-container p-8">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-sky-600 flex items-center justify-center">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>

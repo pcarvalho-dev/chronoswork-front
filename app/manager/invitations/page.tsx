@@ -4,9 +4,11 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { api, Invitation, CreateInvitationData } from '@/app/lib/api';
 import ManagerNavbar from '@/app/components/ManagerNavbar';
+import InteractiveBackground from '@/app/components/InteractiveBackground';
+import CustomSelect from '@/app/components/CustomSelect';
 
 export default function InvitationsManagementPage() {
-  const { user, isManager } = useAuth();
+  const { user, isManager, loading: authLoading } = useAuth();
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -143,22 +145,16 @@ export default function InvitationsManagementPage() {
     });
   };
 
-  if (!isManager) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-warmGrey-50 to-warmGrey-100 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-warmGrey-900 mb-4">Acesso Negado</h1>
-          <p className="text-warmGrey-700">Você não tem permissão para acessar esta página.</p>
-        </div>
-      </div>
-    );
+  if (authLoading || !isManager) {
+    return null;
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-warmGrey-50 to-warmGrey-100">
+    <div className="min-h-screen relative">
+      <InteractiveBackground />
       <ManagerNavbar />
-      
-      <div className="container-custom py-8">
+
+      <div className="container-custom py-8 relative z-10">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
@@ -206,16 +202,17 @@ export default function InvitationsManagementPage() {
           <div className="glass-container p-6 mb-6">
             <div className="flex items-center gap-4">
               <label className="text-sm font-medium text-warmGrey-700">Filtrar por status:</label>
-              <select
+              <CustomSelect
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as any)}
-                className="input w-48"
-              >
-                <option value="all">Todos</option>
-                <option value="active">Ativos</option>
-                <option value="used">Usados</option>
-                <option value="expired">Expirados</option>
-              </select>
+                onChange={(value) => setStatusFilter(value as any)}
+                className="w-48"
+                options={[
+                  { value: 'all', label: 'Todos' },
+                  { value: 'active', label: 'Ativos' },
+                  { value: 'used', label: 'Usados' },
+                  { value: 'expired', label: 'Expirados' }
+                ]}
+              />
             </div>
           </div>
 

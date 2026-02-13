@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/app/contexts/AuthContext';
 import InteractiveBackground from '@/app/components/InteractiveBackground';
+import CustomSelect from '@/app/components/CustomSelect';
+import CustomDatePicker from '@/app/components/CustomDatePicker';
 
 export default function ManagerRegisterPage() {
   const router = useRouter();
@@ -334,7 +336,7 @@ export default function ManagerRegisterPage() {
               onClick={() => setActiveTab('manager')}
               className={`px-6 py-3 rounded-xl font-medium transition-all duration-300 flex items-center gap-2 ${
                 activeTab === 'manager'
-                  ? 'bg-gradient-to-r from-primary-500 to-purple-600 text-white shadow-lg'
+                  ? 'bg-gradient-to-r from-primary-500 to-cyan-600 text-white shadow-lg'
                   : 'bg-white/30 backdrop-blur-sm text-warmGrey-700 hover:bg-white/50'
               }`}
             >
@@ -348,7 +350,7 @@ export default function ManagerRegisterPage() {
               onClick={() => setActiveTab('company')}
               className={`px-6 py-3 rounded-xl font-medium transition-all duration-300 flex items-center gap-2 ${
                 activeTab === 'company'
-                  ? 'bg-gradient-to-r from-primary-500 to-purple-600 text-white shadow-lg'
+                  ? 'bg-gradient-to-r from-primary-500 to-cyan-600 text-white shadow-lg'
                   : 'bg-white/30 backdrop-blur-sm text-warmGrey-700 hover:bg-white/50'
               }`}
             >
@@ -469,69 +471,69 @@ export default function ManagerRegisterPage() {
                     </div>
                     <div>
                       <label htmlFor="birthDate" className="label">Data de Nascimento</label>
-                      <input
-                        type="date"
+                      <CustomDatePicker
                         id="birthDate"
                         name="birthDate"
                         value={managerData.birthDate}
-                        onChange={handleManagerInputChange}
-                        className="input"
+                        onChange={(value) => setManagerData(prev => ({ ...prev, birthDate: value }))}
+                        placeholder="Selecione a data de nascimento"
                         disabled={loading}
+                        max={new Date().toISOString().split('T')[0]}
                       />
                     </div>
                     <div>
                       <label htmlFor="gender" className="label">Gênero</label>
-                      <select
+                      <CustomSelect
                         id="gender"
                         name="gender"
                         value={managerData.gender}
-                        onChange={handleManagerInputChange}
-                        className="input"
+                        onChange={(value) => setManagerData(prev => ({ ...prev, gender: value as any }))}
+                        options={[
+                          { value: '', label: 'Selecione...' },
+                          { value: 'Masculino', label: 'Masculino' },
+                          { value: 'Feminino', label: 'Feminino' },
+                          { value: 'Outro', label: 'Outro' },
+                          { value: 'Prefiro não informar', label: 'Prefiro não informar' }
+                        ]}
                         disabled={loading}
-                      >
-                        <option value="">Selecione...</option>
-                        <option value="Masculino">Masculino</option>
-                        <option value="Feminino">Feminino</option>
-                        <option value="Outro">Outro</option>
-                        <option value="Prefiro não informar">Prefiro não informar</option>
-                      </select>
+                      />
                     </div>
                     <div>
                       <label htmlFor="maritalStatus" className="label">Estado Civil</label>
-                      <select
+                      <CustomSelect
                         id="maritalStatus"
                         name="maritalStatus"
                         value={managerData.maritalStatus}
-                        onChange={handleManagerInputChange}
-                        className="input"
+                        onChange={(value) => setManagerData(prev => ({ ...prev, maritalStatus: value as any }))}
+                        options={[
+                          { value: '', label: 'Selecione...' },
+                          { value: 'Solteiro(a)', label: 'Solteiro(a)' },
+                          { value: 'Casado(a)', label: 'Casado(a)' },
+                          { value: 'Divorciado(a)', label: 'Divorciado(a)' },
+                          { value: 'Viúvo(a)', label: 'Viúvo(a)' },
+                          { value: 'União Estável', label: 'União Estável' }
+                        ]}
                         disabled={loading}
-                      >
-                        <option value="">Selecione...</option>
-                        <option value="Solteiro(a)">Solteiro(a)</option>
-                        <option value="Casado(a)">Casado(a)</option>
-                        <option value="Divorciado(a)">Divorciado(a)</option>
-                        <option value="Viúvo(a)">Viúvo(a)</option>
-                        <option value="União Estável">União Estável</option>
-                      </select>
+                      />
                     </div>
                     <div>
                       <label htmlFor="education" className="label">Escolaridade</label>
-                      <select
+                      <CustomSelect
                         id="education"
                         name="education"
                         value={managerData.education}
-                        onChange={handleManagerInputChange}
-                        className="input"
+                        onChange={(value) => setManagerData(prev => ({ ...prev, education: value as any }))}
+                        options={[
+                          { value: '', label: 'Selecione...' },
+                          { value: 'Fundamental', label: 'Fundamental' },
+                          { value: 'Médio', label: 'Médio' },
+                          { value: 'Superior', label: 'Superior' },
+                          { value: 'Pós-graduação', label: 'Pós-graduação' },
+                          { value: 'Mestrado', label: 'Mestrado' },
+                          { value: 'Doutorado', label: 'Doutorado' }
+                        ]}
                         disabled={loading}
-                      >
-                        <option value="">Selecione...</option>
-                        <option value="Fundamental">Fundamental</option>
-                        <option value="Médio">Médio</option>
-                        <option value="Superior">Superior</option>
-                        <option value="Pós-graduação">Pós-graduação</option>
-                        <option value="Mestrado">Mestrado</option>
-                        <option value="Doutorado">Doutorado</option>
-                      </select>
+                      />
                     </div>
                   </div>
                 </div>
@@ -716,19 +718,19 @@ export default function ManagerRegisterPage() {
                     </div>
                     <div>
                       <label htmlFor="bankAccountType" className="label">Tipo de Conta</label>
-                      <select
+                      <CustomSelect
                         id="bankAccountType"
                         name="bankAccountType"
                         value={managerData.bankAccountType}
-                        onChange={handleManagerInputChange}
-                        className="input"
+                        onChange={(value) => setManagerData(prev => ({ ...prev, bankAccountType: value as any }))}
+                        options={[
+                          { value: '', label: 'Selecione...' },
+                          { value: 'Corrente', label: 'Corrente' },
+                          { value: 'Poupança', label: 'Poupança' },
+                          { value: 'Salário', label: 'Salário' }
+                        ]}
                         disabled={loading}
-                      >
-                        <option value="">Selecione...</option>
-                        <option value="Corrente">Corrente</option>
-                        <option value="Poupança">Poupança</option>
-                        <option value="Salário">Salário</option>
-                      </select>
+                      />
                     </div>
                     <div className="md:col-span-2">
                       <label htmlFor="pix" className="label">PIX</label>

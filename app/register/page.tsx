@@ -4,6 +4,8 @@ import { useState, FormEvent } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import InteractiveBackground from '@/app/components/InteractiveBackground';
+import CustomSelect from '@/app/components/CustomSelect';
+import CustomDatePicker from '@/app/components/CustomDatePicker';
 import { useAuth } from '../contexts/AuthContext';
 
 type Tab = 'basicos' | 'pessoais' | 'endereco' | 'profissionais' | 'bancarios' | 'emergencia';
@@ -274,7 +276,7 @@ export default function RegisterPage() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`px-3 py-2 rounded-xl font-medium transition-all duration-300 flex items-center gap-2 flex-1 min-w-[90px] justify-center ${
                   activeTab === tab.id
-                    ? 'bg-gradient-to-r from-primary-500 to-purple-600 text-white shadow-lg'
+                    ? 'bg-gradient-to-r from-primary-500 to-cyan-600 text-white shadow-lg'
                     : 'bg-white/30 backdrop-blur-sm text-warmGrey-700 hover:bg-white/50'
                 }`}
               >
@@ -393,50 +395,53 @@ export default function RegisterPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label htmlFor="birthDate" className="label">Data de Nascimento</label>
-                    <input
+                    <CustomDatePicker
                       id="birthDate"
-                      type="date"
-                      className="input"
+                      name="birthDate"
                       value={birthDate}
-                      onChange={(e) => setBirthDate(e.target.value)}
+                      onChange={(value) => setBirthDate(value)}
                       disabled={loading}
+                      placeholder="Selecione a data..."
+                      max={new Date().toISOString().split('T')[0]}
                     />
                   </div>
 
                   <div>
                     <label htmlFor="gender" className="label">Gênero</label>
-                    <select
+                    <CustomSelect
                       id="gender"
-                      className="input"
+                      name="gender"
                       value={gender}
-                      onChange={(e) => setGender(e.target.value)}
+                      onChange={(value) => setGender(value)}
                       disabled={loading}
-                    >
-                      <option value="">Selecione...</option>
-                      <option value="Masculino">Masculino</option>
-                      <option value="Feminino">Feminino</option>
-                      <option value="Outro">Outro</option>
-                      <option value="Prefiro não informar">Prefiro não informar</option>
-                    </select>
+                      options={[
+                        { value: '', label: 'Selecione...' },
+                        { value: 'Masculino', label: 'Masculino' },
+                        { value: 'Feminino', label: 'Feminino' },
+                        { value: 'Outro', label: 'Outro' },
+                        { value: 'Prefiro não informar', label: 'Prefiro não informar' }
+                      ]}
+                    />
                   </div>
                 </div>
 
                 <div>
                   <label htmlFor="maritalStatus" className="label">Estado Civil</label>
-                  <select
+                  <CustomSelect
                     id="maritalStatus"
-                    className="input"
+                    name="maritalStatus"
                     value={maritalStatus}
-                    onChange={(e) => setMaritalStatus(e.target.value)}
+                    onChange={(value) => setMaritalStatus(value)}
                     disabled={loading}
-                  >
-                    <option value="">Selecione...</option>
-                    <option value="Solteiro(a)">Solteiro(a)</option>
-                    <option value="Casado(a)">Casado(a)</option>
-                    <option value="Divorciado(a)">Divorciado(a)</option>
-                    <option value="Viúvo(a)">Viúvo(a)</option>
-                    <option value="União Estável">União Estável</option>
-                  </select>
+                    options={[
+                      { value: '', label: 'Selecione...' },
+                      { value: 'Solteiro(a)', label: 'Solteiro(a)' },
+                      { value: 'Casado(a)', label: 'Casado(a)' },
+                      { value: 'Divorciado(a)', label: 'Divorciado(a)' },
+                      { value: 'Viúvo(a)', label: 'Viúvo(a)' },
+                      { value: 'União Estável', label: 'União Estável' }
+                    ]}
+                  />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -471,21 +476,22 @@ export default function RegisterPage() {
 
                 <div>
                   <label htmlFor="education" className="label">Escolaridade</label>
-                  <select
+                  <CustomSelect
                     id="education"
-                    className="input"
+                    name="education"
                     value={education}
-                    onChange={(e) => setEducation(e.target.value)}
+                    onChange={(value) => setEducation(value)}
                     disabled={loading}
-                  >
-                    <option value="">Selecione...</option>
-                    <option value="Fundamental">Fundamental</option>
-                    <option value="Médio">Médio</option>
-                    <option value="Superior">Superior</option>
-                    <option value="Pós-graduação">Pós-graduação</option>
-                    <option value="Mestrado">Mestrado</option>
-                    <option value="Doutorado">Doutorado</option>
-                  </select>
+                    options={[
+                      { value: '', label: 'Selecione...' },
+                      { value: 'Fundamental', label: 'Fundamental' },
+                      { value: 'Médio', label: 'Médio' },
+                      { value: 'Superior', label: 'Superior' },
+                      { value: 'Pós-graduação', label: 'Pós-graduação' },
+                      { value: 'Mestrado', label: 'Mestrado' },
+                      { value: 'Doutorado', label: 'Doutorado' }
+                    ]}
+                  />
                 </div>
               </div>
             )}
@@ -654,13 +660,13 @@ export default function RegisterPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label htmlFor="hireDate" className="label">Data de Contratação</label>
-                    <input
+                    <CustomDatePicker
                       id="hireDate"
-                      type="date"
-                      className="input"
+                      name="hireDate"
                       value={hireDate}
-                      onChange={(e) => setHireDate(e.target.value)}
+                      onChange={(value) => setHireDate(value)}
                       disabled={loading}
+                      placeholder="Selecione a data..."
                     />
                   </div>
 
@@ -695,21 +701,22 @@ export default function RegisterPage() {
 
                 <div>
                   <label htmlFor="employmentType" className="label">Tipo de Contrato</label>
-                  <select
+                  <CustomSelect
                     id="employmentType"
-                    className="input"
+                    name="employmentType"
                     value={employmentType}
-                    onChange={(e) => setEmploymentType(e.target.value)}
+                    onChange={(value) => setEmploymentType(value)}
                     disabled={loading}
-                  >
-                    <option value="">Selecione...</option>
-                    <option value="CLT">CLT</option>
-                    <option value="PJ">PJ</option>
-                    <option value="Estagiário">Estagiário</option>
-                    <option value="Freelancer">Freelancer</option>
-                    <option value="Temporário">Temporário</option>
-                    <option value="Autônomo">Autônomo</option>
-                  </select>
+                    options={[
+                      { value: '', label: 'Selecione...' },
+                      { value: 'CLT', label: 'CLT' },
+                      { value: 'PJ', label: 'PJ' },
+                      { value: 'Estagiário', label: 'Estagiário' },
+                      { value: 'Freelancer', label: 'Freelancer' },
+                      { value: 'Temporário', label: 'Temporário' },
+                      { value: 'Autônomo', label: 'Autônomo' }
+                    ]}
+                  />
                 </div>
 
                 <div>
@@ -773,18 +780,19 @@ export default function RegisterPage() {
 
                 <div>
                   <label htmlFor="bankAccountType" className="label">Tipo de Conta</label>
-                  <select
+                  <CustomSelect
                     id="bankAccountType"
-                    className="input"
+                    name="bankAccountType"
                     value={bankAccountType}
-                    onChange={(e) => setBankAccountType(e.target.value)}
+                    onChange={(value) => setBankAccountType(value)}
                     disabled={loading}
-                  >
-                    <option value="">Selecione...</option>
-                    <option value="Corrente">Corrente</option>
-                    <option value="Poupança">Poupança</option>
-                    <option value="Salário">Salário</option>
-                  </select>
+                    options={[
+                      { value: '', label: 'Selecione...' },
+                      { value: 'Corrente', label: 'Corrente' },
+                      { value: 'Poupança', label: 'Poupança' },
+                      { value: 'Salário', label: 'Salário' }
+                    ]}
+                  />
                 </div>
 
                 <div>

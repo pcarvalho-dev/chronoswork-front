@@ -2,16 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { api, ManualTimeLogData, User } from '@/app/lib/api';
 import { useAuth } from '@/app/contexts/AuthContext';
 import InteractiveBackground from '@/app/components/InteractiveBackground';
+import ManagerNavbar from '@/app/components/ManagerNavbar';
+import CustomSelect from '@/app/components/CustomSelect';
 
 export default function ManualTimeLogPage() {
-  const { isManager } = useAuth();
+  const { isManager, loading: authLoading } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [info, setInfo] = useState('');
   const [users, setUsers] = useState<User[]>([]);
   const [formData, setFormData] = useState<ManualTimeLogData>({
     userId: 0,
@@ -24,10 +26,10 @@ export default function ManualTimeLogPage() {
 
   // Redirect if not manager
   useEffect(() => {
-    if (!isManager) {
+    if (!authLoading && !isManager) {
       router.push('/login');
     }
-  }, [isManager, router]);
+  }, [authLoading, isManager, router]);
 
   useEffect(() => {
     if (isManager) {
@@ -64,7 +66,7 @@ export default function ManualTimeLogPage() {
       setUsers(filteredUsers);
       
       if (filteredUsers.length === 0) {
-        setError('Nenhum funcionário encontrado. Verifique se há funcionários cadastrados e aprovados.');
+        setInfo('Nenhum funcionário encontrado. Verifique se há funcionários cadastrados e aprovados.');
       }
     } catch (err: any) {
       console.error('Error fetching users:', err);
@@ -112,40 +114,15 @@ export default function ManualTimeLogPage() {
     }
   };
 
-  if (!isManager) {
-    return null; // Will redirect
+  if (authLoading || !isManager) {
+    return null;
   }
 
   return (
     <div className="min-h-screen relative">
       <InteractiveBackground />
 
-      {/* Header */}
-      <nav className="bg-white/70 backdrop-blur-lg border-b border-white/30 sticky top-0 z-50">
-        <div className="container-custom">
-          <div className="flex items-center justify-between h-navbar">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => router.push('/manager/time-logs')}
-                className="p-2 rounded-lg hover:bg-white/50 transition-colors"
-              >
-                <svg className="w-6 h-6 text-warmGrey-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-              </button>
-              <div className="flex items-center gap-2">
-                <Image
-                  src="/logo.png"
-                  alt="Chronos.work"
-                  width={1200}
-                  height={320}
-                  className="h-60 w-auto drop-shadow-lg"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <ManagerNavbar />
 
       {/* Main Content */}
       <div className="container-custom py-12 relative z-10">
@@ -168,6 +145,17 @@ export default function ManualTimeLogPage() {
             </div>
           )}
 
+          {info && (
+            <div className="bg-primary-500/10 backdrop-blur-md border border-primary-500/30 text-primary-700 px-4 py-3 rounded-xl mb-6">
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                </svg>
+                <span className="font-medium">{info}</span>
+              </div>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-8">
             {/* Basic Information */}
             <div className="glass-container p-8">
@@ -177,21 +165,20 @@ export default function ManualTimeLogPage() {
                   <label htmlFor="userId" className="label">
                     Funcionário *
                   </label>
-                  <select
+                  <CustomSelect
                     id="userId"
                     name="userId"
-                    value={formData.userId}
-                    onChange={handleInputChange}
+                    value={String(formData.userId)}
+                    onChange={(value) => setFormData(prev => ({ ...prev, userId: Number(value) }))}
                     required
-                    className="input"
-                  >
-                    <option value="">Selecione um funcionário</option>
-                    {users.map(user => (
-                      <option key={user.id} value={user.id}>
-                        {user.name} - {user.department || 'Sem departamento'}
-                      </option>
-                    ))}
-                  </select>
+                    options={[
+                      { value: '', label: 'Selecione um funcionário' },
+                      ...users.map(user => ({
+                        value: String(user.id),
+                        label: `${user.name} - ${user.department || 'Sem departamento'}`
+                      }))
+                    ]}
+                  />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -702,6 +702,7 @@ export interface CreateUserData {
 export interface UpdateUserData {
   name?: string;
   email?: string;
+  role?: string;
   cpf?: string;
   rg?: string;
   birthDate?: string;
